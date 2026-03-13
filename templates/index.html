@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Bioethanol Simulator</title>
+</head>
+
+<body>
+
+<h2>Bioethanol Production Simulator</h2>
+
+<form method="post">
+
+Feed rate (ton/day)<br>
+<input name="feed_rate"><br>
+
+Pretreatment efficiency<br>
+<input name="pretreat_eff"><br>
+
+Hydrolysis efficiency<br>
+<input name="hydroly_eff"><br>
+
+Fermentation efficiency<br>
+<input name="ferment_eff"><br>
+
+Ethanol price ($/L)<br>
+<input name="eth_price"><br>
+
+Feedstock cost ($/ton)<br>
+<input name="feed_cost"><br>
+
+Enzyme cost ($/kg sugar)<br>
+<input name="enzyme_cost"><br>
+
+Annual operating cost<br>
+<input name="annual_operating_cost"><br><br>
+
+<button type="submit">Run Simulation</button>
+
+</form>
+
+{% if result %}
+
+<h3>Results</h3>
+
+Ethanol Production: {{result.ethanol_L}} L<br>
+Daily Profit: ${{result.daily_profit}}
+
+<br><br>
+
+<img src="{{chart}}">
+
+{% endif %}
+
+</body>
+</html>
