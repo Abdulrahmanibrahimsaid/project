@@ -1,107 +1,86 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bioethanol Simulator</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; line-height: 1.6; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; }
-        input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; }
-        button:hover { background-color: #218838; }
-        #results { margin-top: 20px; padding: 15px; border-radius: 4px; display: none; background-color: #f8f9fa; border: 1px solid #ddd; }
-        .error { color: red; font-weight: bold; }
-    </style>
-</head>
-<body>
+import pandas as pd
+import numpy as np
+from flask import Flask, request, jsonify, render_template
+import os
 
-    <h2>Bioethanol Production Simulator</h2>
+app = Flask(__name__)
 
-    <div class="input-group">
-        <label>Feed rate (ton/day):</label>
-        <input type="number" id="feed_rate" placeholder="e.g. 100">
-    </div>
-    <div class="input-group">
-        <label>Pretreatment efficiency (0-1):</label>
-        <input type="number" id="pretreat_eff" step="0.01" placeholder="e.g. 0.9">
-    </div>
-    <div class="input-group">
-        <label>Hydrolysis efficiency (0-1):</label>
-        <input type="number" id="hydroly_eff" step="0.01" placeholder="e.g. 0.8">
-    </div>
-    <div class="input-group">
-        <label>Fermentation efficiency (0-1):</label>
-        <input type="number" id="ferment_eff" step="0.01" placeholder="e.g. 0.9">
-    </div>
-    <div class="input-group">
-        <label>Ethanol price ($/L):</label>
-        <input type="number" id="eth_price" step="0.01" placeholder="e.g. 0.8">
-    </div>
-    <div class="input-group">
-        <label>Feedstock cost ($/ton):</label>
-        <input type="number" id="feed_cost" placeholder="e.g. 50">
-    </div>
-    <div class="input-group">
-        <label>Enzyme cost ($/kg sugar):</label>
-        <input type="number" id="enzyme_cost" step="0.01" placeholder="e.g. 0.1">
-    </div>
-    <div class="input-group">
-        <label>Annual operating cost ($):</label>
-        <input type="number" id="annual_operating_cost" placeholder="e.g. 1000000">
-    </div>
+# إعداد البيانات من ملف الإكسيل
+file = "bioethanol_data.xlsx"
 
-    <button type="button" onclick="runSimulation()">Run Simulation</button>
+def get_excel_data():
+    feed_df = pd.read_excel(file, sheet_name="Feedstock")
+    conv_df = pd.read_excel(file, sheet_name="Conversion")
+    feed_df.columns = feed_df.columns.str.strip().str.lower()
+    conv_df.columns = conv_df.columns.str.strip().str.lower()
+    return feed_df, conv_df
 
-    <div id="results"></div>
+def simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
+                     eth_price, feed_cost, enzyme_cost, annual_operating_cost):
+    
+    feed_df, conv_df = get_excel_data()
+    
+    cell_frac = feed_df.loc[0, "cellulose fraction"]
+    hemi_frac = feed_df.loc[0, "hemicellulose fraction"]
+    moisture_default = feed_df.loc[0, "moisture"]/100
+    gluc_to_eth = conv_df.loc[0, "glucose_to_ethanol_yield"]
+    eth_density = conv_df.loc[0, "ethanol_density"]
 
-    <script>
-        async function runSimulation() {
-            const resultsDiv = document.getElementById('results');
-            
-            // تجميع البيانات
-            const data = {
-                feed_rate: document.getElementById('feed_rate').value,
-                pretreat_eff: document.getElementById('pretreat_eff').value,
-                hydroly_eff: document.getElementById('hydroly_eff').value,
-                ferment_eff: document.getElementById('ferment_eff').value,
-                eth_price: document.getElementById('eth_price').value,
-                feed_cost: document.getElementById('feed_cost').value,
-                enzyme_cost: document.getElementById('enzyme_cost').value,
-                annual_operating_cost: document.getElementById('annual_operating_cost').value
-            };
+    dry_biomass = feed_rate * (1 - moisture_default)
+    cellulose_kg = dry_biomass * cell_frac * 1000
+    hemicell_kg  = dry_biomass * hemi_frac * 1000
 
-            // التحقق من أن كل الخانات ممتلئة
-            if (Object.values(data).some(v => v === "")) {
-                alert("Please fill all fields!");
-                return;
-            }
+    sugar_from_cell = cellulose_kg * pretreat_eff * hydroly_eff
+    sugar_from_hemi = hemicell_kg * pretreat_eff * hydroly_eff
+    total_sugar_kg  = sugar_from_cell + sugar_from_hemi
 
-            try {
-                const response = await fetch('/simulate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
+    fermentable_sugar = total_sugar_kg * ferment_eff
+    ethanol_L = fermentable_sugar * gluc_to_eth
+    
+    daily_revenue = ethanol_L * eth_price
+    daily_feed_cost   = feed_rate * feed_cost
+    daily_enzyme_cost = total_sugar_kg * enzyme_cost
+    daily_operating   = annual_operating_cost / 365
 
-                if (!response.ok) throw new Error('Server Error');
+    total_daily_cost = daily_feed_cost + daily_enzyme_cost + daily_operating
+    daily_profit = daily_revenue - total_daily_cost
 
-                const result = await response.json();
+    return {
+        "daily_profit": daily_profit,
+        "ethanol_L": ethanol_L,
+        "total_daily_cost": total_daily_cost
+    }
 
-                // عرض النتائج في نفس الصفحة
-                resultsDiv.style.display = 'block';
-                resultsDiv.innerHTML = `
-                    <h3 style="margin-top:0">Simulation Results:</h3>
-                    <p><strong>Daily Profit:</strong> <span style="color: ${result.daily_profit >= 0 ? 'green' : 'red'}">$${result.daily_profit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></p>
-                    <p><strong>Ethanol Produced:</strong> ${result.ethanol_L.toLocaleString()} Liters/day</p>
-                    <p><strong>Total Daily Cost:</strong> $${result.total_daily_cost.toLocaleString()}</p>
-                `;
-            } catch (error) {
-                resultsDiv.style.display = 'block';
-                resultsDiv.innerHTML = `<p class="error">Error: Could not connect to the server.</p>`;
-            }
-        }
-    </script>
-</body>
-</html>
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route("/simulate", methods=["POST"])
+def simulate():
+    data = request.json
+    try:
+        results = simulate_scenario(
+            float(data["feed_rate"]), float(data["pretreat_eff"]),
+            float(data["hydroly_eff"]), float(data["ferment_eff"]),
+            float(data["eth_price"]), float(data["feed_cost"]),
+            float(data["enzyme_cost"]), float(data["annual_operating_cost"])
+        )
+        
+        # إضافة تحليل الحساسية للكفاءة (Sensitivity Analysis)
+        sensitivity = []
+        for eff in [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
+            s_res = simulate_scenario(
+                float(data["feed_rate"]), float(data["pretreat_eff"]),
+                float(data["hydroly_eff"]), eff,
+                float(data["eth_price"]), float(data["feed_cost"]),
+                float(data["enzyme_cost"]), float(data["annual_operating_cost"])
+            )
+            sensitivity.append({"efficiency": eff, "profit": s_res["daily_profit"]})
+        
+        return jsonify({"main": results, "sensitivity": sensitivity})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
