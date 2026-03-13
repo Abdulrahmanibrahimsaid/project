@@ -7,7 +7,7 @@ import base64
 app = Flask(__name__)
 
 # ------------------------------
-# Step 1: Fixed reference values (from original code)
+# ثوابت المرجع (لضمان صحة الحسابات)
 # ------------------------------
 cell_frac = 0.38
 hemi_frac = 0.32
@@ -20,7 +20,7 @@ eth_density = 0.786      # kg/L
 cellulose_to_glucose = 1.111
 
 # ------------------------------
-# Step 2: Simulation function (exactly like original)
+# دالة المحاكاة
 # ------------------------------
 def simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
                       eth_price, feed_cost, enzyme_cost, annual_operating_cost):
@@ -41,7 +41,7 @@ def simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
     ethanol_kg = fermentable_sugar * gluc_to_eth
     ethanol_L = ethanol_kg / eth_density
 
-    # Economics
+    # الحسابات الاقتصادية
     daily_revenue = ethanol_L * eth_price
     daily_feed_cost = feed_rate * feed_cost
     daily_enzyme_cost = total_sugar_kg * enzyme_cost
@@ -62,7 +62,7 @@ def simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
     }
 
 # ------------------------------
-# Helper: plot to base64
+# دالة لتحويل الرسومات لbase64
 # ------------------------------
 def plot_to_img(x, y, title, xlabel, ylabel, color='blue', marker=None):
     plt.figure(figsize=(8,5))
@@ -92,15 +92,15 @@ def index():
     ethanol_plot = None
     profit_plot = None
 
-    # Default inputs same as original code (تطلع نفس النتائج)
-    feed_rate = 4_000       # ton/day
-    pretreat_eff = 0.85
-    hydroly_eff = 0.90
+    # القيم الافتراضية
+    feed_rate = 2205
+    pretreat_eff = 0.9
+    hydroly_eff = 0.9
     ferment_eff = 0.95
-    eth_price = 0.57        # $/L
-    feed_cost = 50          # $/ton
-    enzyme_cost = 0.10      # $/kg sugar
-    annual_operating_cost = 86_000_000  # $/year
+    eth_price = 0.57
+    feed_cost = 58.5
+    enzyme_cost = 0.1
+    annual_operating_cost = 12000000
 
     if request.method == "POST":
         feed_rate = float(request.form["feed_rate"])
@@ -112,10 +112,11 @@ def index():
         enzyme_cost = float(request.form["enzyme_cost"])
         annual_operating_cost = float(request.form["annual_operating_cost"])
 
+    # حساب النتائج
     results = simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
                                 eth_price, feed_cost, enzyme_cost, annual_operating_cost)
 
-    # Sensitivity: Efficiencies
+    # Sensitivity Analysis - Efficiencies
     eff_range = np.linspace(0.5, 1.0, 31)
     pretreat_profits = [simulate_scenario(feed_rate, p, hydroly_eff, ferment_eff,
                                          eth_price, feed_cost, enzyme_cost, annual_operating_cost)["daily_profit"] for p in eff_range]
