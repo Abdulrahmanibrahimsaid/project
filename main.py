@@ -7,7 +7,7 @@ import base64
 app = Flask(__name__)
 
 # ------------------------------
-# ثوابت المرجع (لضمان صحة الحسابات)
+# ثوابت المرجع (ضمان نتائج دقيقة)
 # ------------------------------
 cell_frac = 0.38
 hemi_frac = 0.32
@@ -16,7 +16,6 @@ moisture_default = 0.10  # 10% moisture
 
 gluc_to_eth = 0.51       # glucose to ethanol yield
 eth_density = 0.786      # kg/L
-
 cellulose_to_glucose = 1.111
 
 # ------------------------------
@@ -41,7 +40,6 @@ def simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
     ethanol_kg = fermentable_sugar * gluc_to_eth
     ethanol_L = ethanol_kg / eth_density
 
-    # الحسابات الاقتصادية
     daily_revenue = ethanol_L * eth_price
     daily_feed_cost = feed_rate * feed_cost
     daily_enzyme_cost = total_sugar_kg * enzyme_cost
@@ -62,7 +60,7 @@ def simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
     }
 
 # ------------------------------
-# دالة لتحويل الرسومات لbase64
+# دالة لتحويل الرسومات لBase64
 # ------------------------------
 def plot_to_img(x, y, title, xlabel, ylabel, color='blue', marker=None):
     plt.figure(figsize=(8,5))
@@ -86,11 +84,7 @@ def plot_to_img(x, y, title, xlabel, ylabel, color='blue', marker=None):
 @app.route("/", methods=["GET", "POST"])
 def index():
     results = None
-    pretreat_plot = None
-    hydroly_plot = None
-    ferment_plot = None
-    ethanol_plot = None
-    profit_plot = None
+    pretreat_plot = hydroly_plot = ferment_plot = ethanol_plot = profit_plot = None
 
     # القيم الافتراضية
     feed_rate = 2205
@@ -112,7 +106,6 @@ def index():
         enzyme_cost = float(request.form["enzyme_cost"])
         annual_operating_cost = float(request.form["annual_operating_cost"])
 
-    # حساب النتائج
     results = simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
                                 eth_price, feed_cost, enzyme_cost, annual_operating_cost)
 
