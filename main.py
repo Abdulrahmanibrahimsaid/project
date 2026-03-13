@@ -18,26 +18,33 @@ def simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
                       eth_price, feed_cost, enzyme_cost, annual_operating_cost):
     f_df, c_df = get_data()
     
-    # المعاملات من الإكسيل
+    # ثوابت NREL التقنية
+    moisture = f_df.loc[0, "moisture"] / 100
     cell_frac = f_df.loc[0, "cellulose fraction"]
     hemi_frac = f_df.loc[0, "hemicellulose fraction"]
-    moisture = f_df.loc[0, "moisture"] / 100
-    gluc_to_eth = c_df.loc[0, "glucose_to_ethanol_yield"]
-    eth_density = c_df.loc[0, "ethanol_density"]
+    
+    # عوامل تحويل الكتلة (Hydration Factors) حسب NREL
+    cellulose_to_glucose = 1.111  
+    hemicellulose_to_xylose = 1.136
+    theoretical_yield = 0.511 # g ethanol / g sugar
+    eth_density = 0.789 # kg/L
 
-    # الحسابات التفصيلية
+    # 1. حساب الكتلة الجافة
     dry_biomass = feed_rate * (1 - moisture)
     cellulose_kg = dry_biomass * cell_frac * 1000
     hemicell_kg = dry_biomass * hemi_frac * 1000
     
-    sugar_from_cell = cellulose_kg * pretreat_eff * hydroly_eff
-    sugar_from_hemi = hemicell_kg * pretreat_eff * hydroly_eff
-    total_sugar_kg = sugar_from_cell + sugar_from_hemi
+    # 2. حساب السكريات الكلية (مع إضافة وزن الماء حسب التفاعل الكيميائي)
+    glucose_kg = cellulose_kg * cellulose_to_glucose * pretreat_eff * hydroly_eff
+    xylose_kg = hemicell_kg * hemicellulose_to_xylose * pretreat_eff * hydroly_eff
+    total_sugar_kg = glucose_kg + xylose_kg
     
+    # 3. حساب السكر القابل للتخمر والإنتاج
     fermentable_sugar = total_sugar_kg * ferment_eff
-    ethanol_L = fermentable_sugar * gluc_to_eth
-    ethanol_kg = ethanol_L * eth_density
+    ethanol_kg = fermentable_sugar * theoretical_yield * 0.95 # فرض كفاءة تخمير 95% من النظري
+    ethanol_L = ethanol_kg / eth_density
     
+    # 4. الحسابات المالية
     daily_revenue = ethanol_L * eth_price
     daily_feed_cost = feed_rate * feed_cost
     daily_enzyme_cost = total_sugar_kg * enzyme_cost
