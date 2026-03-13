@@ -1,78 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bioethanol Simulation</title>
+    <title>Bioethanol Simulator</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1, h2 { color: #2F4F4F; }
-        label { display: block; margin-top: 10px; }
-        input[type=number] { width: 150px; padding: 5px; margin-top: 3px; }
-        input[type=submit] { margin-top: 15px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
-        input[type=submit]:hover { background-color: #45a049; }
-        img { margin-top: 15px; max-width: 100%; height: auto; border: 1px solid #ccc; padding: 5px; }
-        ul { list-style-type: none; padding-left: 0; }
-        li { margin-bottom: 5px; }
+        body { font-family: Arial; margin: 20px; }
+        label { display:block; margin-top:10px; }
+        input[type=number] { width:150px; padding:5px; margin-top:3px; }
+        input[type=submit] { margin-top:15px; padding:10px 20px; background:#4CAF50; color:white; border:none; cursor:pointer; }
+        input[type=submit]:hover { background:#45a049; }
+        img { margin-top:15px; max-width:100%; height:auto; border:1px solid #ccc; padding:5px; }
+        ul { list-style:none; padding-left:0; }
+        li { margin-bottom:5px; }
     </style>
 </head>
 <body>
-    <h1>Bioethanol Production Simulator</h1>
-    <form method="POST">
-        <label>Feedstock Rate (ton/day):</label>
-        <input type="number" step="any" name="feed_rate" value="4000" required>
+<h1>Bioethanol Production Simulator</h1>
+<form method="POST">
+    <label>Feedstock Rate (ton/day):</label>
+    <input type="number" step="any" name="feed_rate" value="{{ request.form.feed_rate or 2205 }}" required>
 
-        <label>Pretreatment Efficiency (0.5-1.0):</label>
-        <input type="number" step="any" name="pretreat_eff" value="0.85" required>
+    <label>Pretreatment Efficiency (0.5-1.0):</label>
+    <input type="number" step="any" name="pretreat_eff" value="{{ request.form.pretreat_eff or 0.9 }}" required>
 
-        <label>Hydrolysis Efficiency (0.5-1.0):</label>
-        <input type="number" step="any" name="hydroly_eff" value="0.9" required>
+    <label>Hydrolysis Efficiency (0.5-1.0):</label>
+    <input type="number" step="any" name="hydroly_eff" value="{{ request.form.hydroly_eff or 0.9 }}" required>
 
-        <label>Fermentation Efficiency (0.5-1.0):</label>
-        <input type="number" step="any" name="ferment_eff" value="0.95" required>
+    <label>Fermentation Efficiency (0.5-1.0):</label>
+    <input type="number" step="any" name="ferment_eff" value="{{ request.form.ferment_eff or 0.95 }}" required>
 
-        <label>Ethanol Price ($/L):</label>
-        <input type="number" step="any" name="eth_price" value="0.57" required>
+    <label>Ethanol Price ($/L):</label>
+    <input type="number" step="any" name="eth_price" value="{{ request.form.eth_price or 0.57 }}" required>
 
-        <label>Feedstock Cost ($/ton):</label>
-        <input type="number" step="any" name="feed_cost" value="50" required>
+    <label>Feedstock Cost ($/ton):</label>
+    <input type="number" step="any" name="feed_cost" value="{{ request.form.feed_cost or 58.5 }}" required>
 
-        <label>Enzyme Cost ($/kg sugar):</label>
-        <input type="number" step="any" name="enzyme_cost" value="0.1" required>
+    <label>Enzyme Cost ($/kg sugar):</label>
+    <input type="number" step="any" name="enzyme_cost" value="{{ request.form.enzyme_cost or 0.1 }}" required>
 
-        <label>Annual Operating Cost ($/year):</label>
-        <input type="number" step="any" name="annual_operating_cost" value="86000000" required>
+    <label>Annual Operating Cost ($/year):</label>
+    <input type="number" step="any" name="annual_operating_cost" value="{{ request.form.annual_operating_cost or 12000000 }}" required>
 
-        <input type="submit" value="Simulate">
-    </form>
+    <input type="submit" value="Simulate">
+</form>
 
-    {% if results %}
-    <h2>Simulation Results</h2>
-    <ul>
-        <li>Dry Biomass: {{ results['dry_biomass'] | round(2) }} ton/day</li>
-        <li>Total Sugars: {{ results['total_sugar_kg'] | round(2) }} kg/day</li>
-        <li>Fermentable Sugar: {{ results['fermentable_sugar_kg'] | round(2) }} kg/day</li>
-        <li>Ethanol Production: {{ results['ethanol_L'] | round(2) }} L/day</li>
-        <li>Ethanol Mass: {{ results['ethanol_kg'] | round(2) }} kg/day</li>
-        <li>Daily Revenue: ${{ results['daily_revenue'] | round(2) }}</li>
-        <li>Total Daily Cost: ${{ results['total_daily_cost'] | round(2) }}</li>
-        <li>Daily Profit: ${{ results['daily_profit'] | round(2) }}</li>
-    </ul>
+{% if results %}
+<h2>Simulation Results</h2>
+<ul>
+    <li>Dry Biomass: {{ results['dry_biomass'] | round(2) }} ton/day</li>
+    <li>Total Sugars: {{ results['total_sugar_kg'] | round(2) }} kg/day</li>
+    <li>Fermentable Sugar: {{ results['fermentable_sugar_kg'] | round(2) }} kg/day</li>
+    <li>Ethanol Production: {{ results['ethanol_L'] | round(2) }} L/day</li>
+    <li>Ethanol Mass: {{ results['ethanol_kg'] | round(2) }} kg/day</li>
+    <li>Daily Revenue: ${{ results['daily_revenue'] | round(2) }}</li>
+    <li>Total Daily Cost: ${{ results['total_daily_cost'] | round(2) }}</li>
+    <li>Daily Profit: ${{ results['daily_profit'] | round(2) }}</li>
+</ul>
 
-    <h2>Sensitivity Analysis: Efficiencies</h2>
-    <p><strong>Pretreatment Efficiency vs Profit</strong></p>
-    <img src="data:image/png;base64,{{ pretreat_plot }}" alt="Pretreatment Efficiency">
+<h2>Sensitivity Analysis: Efficiencies</h2>
+<p><strong>Pretreatment Efficiency vs Profit</strong></p>
+<img src="data:image/png;base64,{{ pretreat_plot }}">
+<p><strong>Hydrolysis Efficiency vs Profit</strong></p>
+<img src="data:image/png;base64,{{ hydroly_plot }}">
+<p><strong>Fermentation Efficiency vs Profit</strong></p>
+<img src="data:image/png;base64,{{ ferment_plot }}">
 
-    <p><strong>Hydrolysis Efficiency vs Profit</strong></p>
-    <img src="data:image/png;base64,{{ hydroly_plot }}" alt="Hydrolysis Efficiency">
-
-    <p><strong>Fermentation Efficiency vs Profit</strong></p>
-    <img src="data:image/png;base64,{{ ferment_plot }}" alt="Fermentation Efficiency">
-
-    <h2>Sensitivity vs Feed Rate</h2>
-    <p><strong>Ethanol Production vs Feed Rate</strong></p>
-    <img src="data:image/png;base64,{{ ethanol_plot }}" alt="Ethanol Production">
-
-    <p><strong>Daily Profit vs Feed Rate</strong></p>
-    <img src="data:image/png;base64,{{ profit_plot }}" alt="Daily Profit">
-    {% endif %}
+<h2>Sensitivity vs Feed Rate</h2>
+<p><strong>Ethanol Production vs Feed Rate</strong></p>
+<img src="data:image/png;base64,{{ ethanol_plot }}">
+<p><strong>Daily Profit vs Feed Rate</strong></p>
+<img src="data:image/png;base64,{{ profit_plot }}">
+{% endif %}
 </body>
 </html>
