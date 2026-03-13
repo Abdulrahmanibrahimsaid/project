@@ -1,55 +1,63 @@
+from flask import Flask, render_template, request
 import pandas as pd
 import numpy as np
-from flask import Flask, request, jsonify, render_template
-import os
+import matplotlib.pyplot as plt
+import io
+import base64
 
 app = Flask(__name__)
 
-# --- الخطوة 1: قراءة البيانات من الإكسيل ---
+# ------------------------------
+# Step 1: Read fixed data from Excel
+# ------------------------------
 file = "bioethanol_data.xlsx"
-def get_excel_data():
-    f_df = pd.read_excel(file, sheet_name="Feedstock")
-    c_df = pd.read_excel(file, sheet_name="Conversion")
-    f_df.columns = f_df.columns.str.strip().str.lower()
-    c_df.columns = c_df.columns.str.strip().str.lower()
-    return f_df, c_df
 
-# --- الخطوة 2: دالة المحاكاة بمعايير NREL ---
+feed_df = pd.read_excel(file, sheet_name="Feedstock")
+conv_df = pd.read_excel(file, sheet_name="Conversion")
+
+# تنظيف أسماء الأعمدة
+feed_df.columns = feed_df.columns.str.strip().str.lower()
+conv_df.columns = conv_df.columns.str.strip().str.lower()
+
+# قيم ثابتة من الملف
+cell_frac = feed_df.loc[0, "cellulose fraction"]
+hemi_frac = feed_df.loc[0, "hemicellulose fraction"]
+lign_frac = feed_df.loc[0, "lignin fraction"]
+moisture_default = feed_df.loc[0, "moisture"]/100  # decimal
+
+gluc_to_eth = conv_df.loc[0, "glucose_to_ethanol_yield"]
+eth_density = conv_df.loc[0, "ethanol_density"]
+
+cellulose_to_glucose = 1.111
+
+# ------------------------------
+# Step 2: Simulation function
+# ------------------------------
 def simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
                       eth_price, feed_cost, enzyme_cost, annual_operating_cost):
     
-    f_df, c_df = get_excel_data()
-    
-    # المعاملات الفنية
-    moisture = f_df.loc[0, "moisture"] / 100
-    cell_frac = f_df.loc[0, "cellulose fraction"]
-    hemi_frac = f_df.loc[0, "hemicellulose fraction"]
-    
-    # معاملات التحويل الكيميائية (NREL Factors)
-    c_to_g = 1.111  # Cellulose to Glucose
-    h_to_x = 1.136  # Hemicellulose to Xylose
-    theoretical_yield = 0.511 # g ethanol / g sugar
-    eth_density = 0.789 # kg/L
-
-    # الحسابات
-    dry_biomass = feed_rate * (1 - moisture)
+    dry_biomass = feed_rate * (1 - moisture_default)
     cellulose_kg = dry_biomass * cell_frac * 1000
-    hemicell_kg = dry_biomass * hemi_frac * 1000
-    
-    glucose_kg = cellulose_kg * c_to_g * pretreat_eff * hydroly_eff
-    xylose_kg = hemicell_kg * h_to_x * pretreat_eff * hydroly_eff
-    total_sugar_kg = glucose_kg + xylose_kg
-    
+    hemicell_kg  = dry_biomass * hemi_frac * 1000
+
+    glucose_from_cellulose = cellulose_kg * cellulose_to_glucose
+    xylose_from_hemi = hemicell_kg * cellulose_to_glucose
+
+    sugar_from_cell = glucose_from_cellulose * pretreat_eff * hydroly_eff
+    sugar_from_hemi = xylose_from_hemi * pretreat_eff * hydroly_eff
+
+    total_sugar_kg = sugar_from_cell + sugar_from_hemi
     fermentable_sugar = total_sugar_kg * ferment_eff
-    ethanol_kg = fermentable_sugar * theoretical_yield
+
+    ethanol_kg = fermentable_sugar * gluc_to_eth
     ethanol_L = ethanol_kg / eth_density
-    
-    # الحسابات المالية
+
+    # Economics
     daily_revenue = ethanol_L * eth_price
     daily_feed_cost = feed_rate * feed_cost
     daily_enzyme_cost = total_sugar_kg * enzyme_cost
     daily_operating = annual_operating_cost / 365
-    
+
     total_daily_cost = daily_feed_cost + daily_enzyme_cost + daily_operating
     daily_profit = daily_revenue - total_daily_cost
 
@@ -64,33 +72,96 @@ def simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
         "daily_profit": daily_profit
     }
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+# ------------------------------
+# Step 3: Flask routes
+# ------------------------------
+@app.route("/", methods=["GET", "POST"])
+def index():
+    results = None
+    pretreat_plot = None
+    hydroly_plot = None
+    ferment_plot = None
+    ethanol_plot = None
+    profit_plot = None
 
-@app.route("/simulate", methods=["POST"])
-def simulate():
-    d = request.json
-    try:
-        # النتيجة الأساسية
-        res = simulate_scenario(float(d["feed_rate"]), float(d["pretreat_eff"]), 
-                                float(d["hydroly_eff"]), float(d["ferment_eff"]),
-                                float(d["eth_price"]), float(d["feed_cost"]), 
-                                float(d["enzyme_cost"]), float(d["annual_operating_cost"]))
-        
-        # تحليل الحساسية للكفاءات
-        eff_range = np.linspace(0.5, 1.0, 11)
-        sens_eff = {
-            "labels": (eff_range * 100).tolist(),
-            "pretreat": [simulate_scenario(float(d["feed_rate"]), e, float(d["hydroly_eff"]), float(d["ferment_eff"]), float(d["eth_price"]), float(d["feed_cost"]), float(d["enzyme_cost"]), float(d["annual_operating_cost"]))["daily_profit"] for e in eff_range],
-            "hydroly": [simulate_scenario(float(d["feed_rate"]), float(d["pretreat_eff"]), e, float(d["ferment_eff"]), float(d["eth_price"]), float(d["feed_cost"]), float(d["enzyme_cost"]), float(d["annual_operating_cost"]))["daily_profit"] for e in eff_range],
-            "ferment": [simulate_scenario(float(d["feed_rate"]), float(d["pretreat_eff"]), float(d["hydroly_eff"]), e, float(d["eth_price"]), float(d["feed_cost"]), float(d["enzyme_cost"]), float(d["annual_operating_cost"]))["daily_profit"] for e in eff_range]
-        }
-        
-        return jsonify({"main": res, "sens_eff": sens_eff})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+    if request.method == "POST":
+        # قراءة مدخلات المستخدم
+        feed_rate = float(request.form["feed_rate"])
+        pretreat_eff = float(request.form["pretreat_eff"])
+        hydroly_eff = float(request.form["hydroly_eff"])
+        ferment_eff = float(request.form["ferment_eff"])
+        eth_price = float(request.form["eth_price"])
+        feed_cost = float(request.form["feed_cost"])
+        enzyme_cost = float(request.form["enzyme_cost"])
+        annual_operating_cost = float(request.form["annual_operating_cost"])
 
+        results = simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
+                                    eth_price, feed_cost, enzyme_cost, annual_operating_cost)
+
+        # ------------------------------
+        # Sensitivity Analysis: Efficiencies
+        # ------------------------------
+        eff_range = np.linspace(0.5, 1.0, 31)
+
+        pretreat_profits = [simulate_scenario(feed_rate, p, hydroly_eff, ferment_eff,
+                                             eth_price, feed_cost, enzyme_cost, annual_operating_cost)["daily_profit"] for p in eff_range]
+        hydroly_profits  = [simulate_scenario(feed_rate, pretreat_eff, h, ferment_eff,
+                                             eth_price, feed_cost, enzyme_cost, annual_operating_cost)["daily_profit"] for h in eff_range]
+        ferment_profits  = [simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, f,
+                                             eth_price, feed_cost, enzyme_cost, annual_operating_cost)["daily_profit"] for f in eff_range]
+
+        pretreat_plot = plot_to_img(eff_range*100, pretreat_profits, "Pretreatment Efficiency", "Efficiency (%)", "Daily Profit ($)", "red")
+        hydroly_plot  = plot_to_img(eff_range*100, hydroly_profits, "Hydrolysis Efficiency", "Efficiency (%)", "Daily Profit ($)", "blue")
+        ferment_plot  = plot_to_img(eff_range*100, ferment_profits, "Fermentation Efficiency", "Efficiency (%)", "Daily Profit ($)", "green")
+
+        # ------------------------------
+        # Sensitivity vs Feed Rate
+        # ------------------------------
+        feed_range = np.linspace(feed_rate*0.7, feed_rate*1.3, 10)
+        ethanol_prod = []
+        profit_list = []
+
+        for f in feed_range:
+            sim = simulate_scenario(f, pretreat_eff, hydroly_eff, ferment_eff,
+                                    eth_price, feed_cost, enzyme_cost, annual_operating_cost)
+            ethanol_prod.append(sim["ethanol_L"])
+            profit_list.append(sim["daily_profit"])
+
+        ethanol_plot = plot_to_img(feed_range, ethanol_prod, "Ethanol Production vs Feedstock Rate",
+                                   "Feedstock Rate (ton/day)", "Ethanol Production (L/day)", "blue", marker='o')
+        profit_plot = plot_to_img(feed_range, profit_list, "Daily Profit vs Feedstock Rate",
+                                   "Feedstock Rate (ton/day)", "Daily Profit ($)", "orange", marker='o')
+
+    return render_template("index.html",
+                           results=results,
+                           pretreat_plot=pretreat_plot,
+                           hydroly_plot=hydroly_plot,
+                           ferment_plot=ferment_plot,
+                           ethanol_plot=ethanol_plot,
+                           profit_plot=profit_plot)
+
+# ------------------------------
+# Helper function to convert plot to image
+# ------------------------------
+def plot_to_img(x, y, title, xlabel, ylabel, color='blue', marker=None):
+    plt.figure(figsize=(8,5))
+    if marker:
+        plt.plot(x, y, marker=marker, color=color)
+    else:
+        plt.plot(x, y, color=color)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.grid(True)
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    plt.close()
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+    return img_base64
+
+# ------------------------------
+# Run Flask
+# ------------------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
