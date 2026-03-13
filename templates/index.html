@@ -1,55 +1,40 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Bioethanol Simulator</title>
-</head>
+<script>
+async function runSimulation() {
+    // تجميع البيانات من الخانات
+    const data = {
+        feed_rate: document.getElementById('feed_rate').value,
+        pretreat_eff: document.getElementById('pretreat_eff').value,
+        hydroly_eff: document.getElementById('hydroly_eff').value,
+        ferment_eff: document.getElementById('ferment_eff').value,
+        eth_price: document.getElementById('eth_price').value,
+        feed_cost: document.getElementById('feed_cost').value,
+        enzyme_cost: document.getElementById('enzyme_cost').value,
+        annual_operating_cost: document.getElementById('annual_operating_cost').value
+    };
 
-<body>
+    // التأكد إن مفيش خانة فاضية
+    if (Object.values(data).some(x => x === "")) {
+        alert("من فضلك املأ كل الخانات أولاً");
+        return;
+    }
 
-<h2>Bioethanol Production Simulator</h2>
+    // إرسال البيانات للسيرفر
+    const response = await fetch('/simulate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
 
-<form method="post">
+    const result = await response.json();
+    
+    // عرض النتيجة في الصفحة بدل ما تفتح صفحة جديدة
+    document.getElementById('results').innerHTML = `
+        <h3>Results:</h3>
+        <p>Daily Profit: $${result.daily_profit.toFixed(2)}</p>
+        <p>Ethanol Produced: ${result.ethanol_L.toFixed(2)} Liters</p>
+    `;
+}
+</script>
 
-Feed rate (ton/day)<br>
-<input name="feed_rate"><br>
-
-Pretreatment efficiency<br>
-<input name="pretreat_eff"><br>
-
-Hydrolysis efficiency<br>
-<input name="hydroly_eff"><br>
-
-Fermentation efficiency<br>
-<input name="ferment_eff"><br>
-
-Ethanol price ($/L)<br>
-<input name="eth_price"><br>
-
-Feedstock cost ($/ton)<br>
-<input name="feed_cost"><br>
-
-Enzyme cost ($/kg sugar)<br>
-<input name="enzyme_cost"><br>
-
-Annual operating cost<br>
-<input name="annual_operating_cost"><br><br>
-
-<button type="submit">Run Simulation</button>
-
-</form>
-
-{% if result %}
-
-<h3>Results</h3>
-
-Ethanol Production: {{result.ethanol_L}} L<br>
-Daily Profit: ${{result.daily_profit}}
-
-<br><br>
-
-<img src="{{chart}}">
-
-{% endif %}
-
-</body>
-</html>
+<button type="button" onclick="runSimulation()">Run Simulation</button>
+<div id="results"></div>
