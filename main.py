@@ -66,7 +66,7 @@ def simulate():
             float(data["enzyme_cost"]), float(data["annual_operating_cost"])
         )
         
-        # إضافة تحليل الحساسية للكفاءة (Sensitivity Analysis)
+        # تحليل الحساسية
         sensitivity = []
         for eff in [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
             s_res = simulate_scenario(
