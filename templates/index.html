@@ -3,91 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bioethanol Simulator Pro</title>
+    <title>Bioethanol Pro Simulator</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; background-color: #f4f7f6; }
-        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: #2c3e50; text-align: center; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #34495e; }
-        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { background-color: #27ae60; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
-        #results { margin-top: 25px; display: none; padding: 20px; border-radius: 8px; background: #e8f6ef; border-left: 5px solid #27ae60; }
-        .chart-container { margin-top: 30px; height: 300px; }
+        body { font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 20px auto; padding: 20px; background-color: #f0f2f5; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        button { background: #1a73e8; color: white; padding: 15px; border: none; border-radius: 8px; width: 100%; font-size: 16px; margin-top: 20px; cursor: pointer; }
+        #results { margin-top: 30px; display: none; background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #e3e6ea; }
+        .result-item { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 8px 0; }
+        .result-item b { color: #202124; }
+        .chart-container { margin-top: 40px; height: 350px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Bioethanol Simulation & Analysis</h2>
-    
+    <h2 style="text-align: center;">Bioethanol Production Simulator</h2>
     <div class="grid">
         <div><label>Feed rate (ton/day)</label><input type="number" id="feed_rate" value="100"></div>
-        <div><label>Pretreatment Efficiency (0-1)</label><input type="number" id="pretreat_eff" step="0.1" value="0.9"></div>
-        <div><label>Hydrolysis Efficiency (0-1)</label><input type="number" id="hydroly_eff" step="0.1" value="0.8"></div>
-        <div><label>Fermentation Efficiency (0-1)</label><input type="number" id="ferment_eff" step="0.1" value="0.9"></div>
+        <div><label>Pretreatment Efficiency</label><input type="number" id="pretreat_eff" step="0.1" value="0.9"></div>
+        <div><label>Hydrolysis Efficiency</label><input type="number" id="hydroly_eff" step="0.1" value="0.8"></div>
+        <div><label>Fermentation Efficiency</label><input type="number" id="ferment_eff" step="0.1" value="0.9"></div>
         <div><label>Ethanol Price ($/L)</label><input type="number" id="eth_price" step="0.1" value="0.8"></div>
         <div><label>Feedstock Cost ($/ton)</label><input type="number" id="feed_cost" value="50"></div>
         <div><label>Enzyme Cost ($/kg sugar)</label><input type="number" id="enzyme_cost" step="0.01" value="0.1"></div>
         <div><label>Annual Operating Cost ($)</label><input type="number" id="annual_operating_cost" value="1000000"></div>
     </div>
 
-    <button onclick="runSimulation()">Run Full Simulation & Chart</button>
+    <button onclick="runSimulation()">Run Full Simulation</button>
 
     <div id="results"></div>
 
-    <div class="chart-container">
-        <canvas id="sensitivityChart"></canvas>
-    </div>
+    <div class="chart-container"><canvas id="sensitivityChart"></canvas></div>
 </div>
 
 <script>
 let myChart = null;
 
 async function runSimulation() {
-    const data = {
-        feed_rate: document.getElementById('feed_rate').value,
-        pretreat_eff: document.getElementById('pretreat_eff').value,
-        hydroly_eff: document.getElementById('hydroly_eff').value,
-        ferment_eff: document.getElementById('ferment_eff').value,
-        eth_price: document.getElementById('eth_price').value,
-        feed_cost: document.getElementById('feed_cost').value,
-        enzyme_cost: document.getElementById('enzyme_cost').value,
-        annual_operating_cost: document.getElementById('annual_operating_cost').value
-    };
+    const data = {};
+    document.querySelectorAll('input').forEach(i => data[i.id] = i.value);
 
     const response = await fetch('/simulate', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(data)
     });
-
     const res = await response.json();
 
-    // 1. عرض النتائج الرقمية
-    const resultsDiv = document.getElementById('results');
-    resultsDiv.style.display = 'block';
-    resultsDiv.innerHTML = `
-        <h3>Results Summary:</h3>
-        <p><strong>Daily Profit:</strong> $${res.main.daily_profit.toLocaleString()}</p>
-        <p><strong>Ethanol Produced:</strong> ${res.main.ethanol_L.toLocaleString()} L/day</p>
+    const rDiv = document.getElementById('results');
+    rDiv.style.display = 'block';
+    
+    const m = res.main;
+    rDiv.innerHTML = `
+        <h3 style="margin-top:0; color:#1a73e8;">Simulation Results:</h3>
+        <div class="result-item"><span>Dry Biomass:</span> <b>${m.dry_biomass.toFixed(2)} ton</b></div>
+        <div class="result-item"><span>Total Sugar:</span> <b>${m.total_sugar_kg.toLocaleString()} kg</b></div>
+        <div class="result-item"><span>Fermentable Sugar:</span> <b>${m.fermentable_sugar_kg.toLocaleString()} kg</b></div>
+        <div class="result-item"><span>Ethanol Produced (L):</span> <b>${m.ethanol_L.toLocaleString()} L</b></div>
+        <div class="result-item"><span>Ethanol Produced (kg):</span> <b>${m.ethanol_kg.toLocaleString()} kg</b></div>
+        <div class="result-item"><span>Daily Revenue:</span> <b>$${m.daily_revenue.toLocaleString()}</b></div>
+        <div class="result-item"><span>Total Daily Cost:</span> <b>$${m.total_daily_cost.toLocaleString()}</b></div>
+        <div class="result-item" style="border:none; font-size:1.2em; margin-top:10px; color:#27ae60;">
+            <span>Daily Profit:</span> <b>$${m.daily_profit.toLocaleString()}</b>
+        </div>
     `;
 
-    // 2. رسم التحليل (Sensitivity Chart)
     const ctx = document.getElementById('sensitivityChart').getContext('2d');
     if (myChart) myChart.destroy();
-    
     myChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: res.sensitivity.map(s => (s.efficiency * 100) + '%'),
             datasets: [{
-                label: 'Profit vs Efficiency',
+                label: 'Daily Profit vs Efficiency',
                 data: res.sensitivity.map(s => s.profit),
-                borderColor: '#27ae60',
-                fill: false,
-                tension: 0.1
+                borderColor: '#1a73e8',
+                backgroundColor: 'rgba(26, 115, 232, 0.1)',
+                fill: true,
+                tension: 0.3
             }]
         },
         options: { responsive: true, maintainAspectRatio: false }
