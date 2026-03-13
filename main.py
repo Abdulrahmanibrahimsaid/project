@@ -1,8 +1,8 @@
-from flask import Flask, render_template, request
-import pandas as pd
+
+     import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import os
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
@@ -16,11 +16,11 @@ conv_df.columns = conv_df.columns.str.strip().str.lower()
 
 cell_frac = feed_df.loc[0, "cellulose fraction"]
 hemi_frac = feed_df.loc[0, "hemicellulose fraction"]
+lign_frac = feed_df.loc[0, "lignin fraction"]
 moisture_default = feed_df.loc[0, "moisture"]/100
 
 gluc_to_eth = conv_df.loc[0, "glucose_to_ethanol_yield"]
 eth_density = conv_df.loc[0, "ethanol_density"]
-
 
 def simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
                       eth_price, feed_cost, enzyme_cost, annual_operating_cost):
@@ -38,66 +38,42 @@ def simulate_scenario(feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
     ethanol_kg = ethanol_L * eth_density
 
     daily_revenue = ethanol_L * eth_price
-    daily_feed_cost = feed_rate * feed_cost
+    daily_feed_cost   = feed_rate * feed_cost
     daily_enzyme_cost = total_sugar_kg * enzyme_cost
-    daily_operating = annual_operating_cost / 365
+    daily_operating   = annual_operating_cost / 365
 
     total_daily_cost = daily_feed_cost + daily_enzyme_cost + daily_operating
     daily_profit = daily_revenue - total_daily_cost
 
-    return ethanol_L, daily_profit
+    return {
+        "dry_biomass": dry_biomass,
+        "total_sugar_kg": total_sugar_kg,
+        "fermentable_sugar_kg": fermentable_sugar,
+        "ethanol_L": ethanol_L,
+        "ethanol_kg": ethanol_kg,
+        "daily_revenue": daily_revenue,
+        "total_daily_cost": total_daily_cost,
+        "daily_profit": daily_profit
+    }
 
+@app.route("/simulate", methods=["POST"])
+def simulate():
 
-@app.route("/", methods=["GET", "POST"])
-def index():
+    data = request.json
 
-    result = None
-    chart_path = None
+    results = simulate_scenario(
+        float(data["feed_rate"]),
+        float(data["pretreat_eff"]),
+        float(data["hydroly_eff"]),
+        float(data["ferment_eff"]),
+        float(data["eth_price"]),
+        float(data["feed_cost"]),
+        float(data["enzyme_cost"]),
+        float(data["annual_operating_cost"])
+    )
 
-    if request.method == "POST":
-
-        feed_rate = float(request.form["feed_rate"])
-        pretreat_eff = float(request.form["pretreat_eff"])
-        hydroly_eff = float(request.form["hydroly_eff"])
-        ferment_eff = float(request.form["ferment_eff"])
-        eth_price = float(request.form["eth_price"])
-        feed_cost = float(request.form["feed_cost"])
-        enzyme_cost = float(request.form["enzyme_cost"])
-        annual_operating_cost = float(request.form["annual_operating_cost"])
-
-        ethanol_L, daily_profit = simulate_scenario(
-            feed_rate, pretreat_eff, hydroly_eff, ferment_eff,
-            eth_price, feed_cost, enzyme_cost, annual_operating_cost
-        )
-
-        result = {
-            "ethanol_L": round(ethanol_L,2),
-            "daily_profit": round(daily_profit,2)
-        }
-
-        eff_range = np.linspace(0.7,1.0,31)
-        profits = []
-
-        for e in eff_range:
-            _, p = simulate_scenario(
-                feed_rate, e, hydroly_eff, ferment_eff,
-                eth_price, feed_cost, enzyme_cost, annual_operating_cost
-            )
-            profits.append(p)
-
-        plt.figure()
-        plt.plot(eff_range*100, profits)
-        plt.xlabel("Pretreatment Efficiency (%)")
-        plt.ylabel("Daily Profit ($)")
-        plt.title("Sensitivity Analysis")
-
-        chart_path = "static/chart.png"
-        plt.savefig(chart_path)
-        plt.close()
-
-    return render_template("index.html", result=result, chart=chart_path)
+    return jsonify(results)
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=5000)
