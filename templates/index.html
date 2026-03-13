@@ -1,40 +1,107 @@
-<script>
-async function runSimulation() {
-    // تجميع البيانات من الخانات
-    const data = {
-        feed_rate: document.getElementById('feed_rate').value,
-        pretreat_eff: document.getElementById('pretreat_eff').value,
-        hydroly_eff: document.getElementById('hydroly_eff').value,
-        ferment_eff: document.getElementById('ferment_eff').value,
-        eth_price: document.getElementById('eth_price').value,
-        feed_cost: document.getElementById('feed_cost').value,
-        enzyme_cost: document.getElementById('enzyme_cost').value,
-        annual_operating_cost: document.getElementById('annual_operating_cost').value
-    };
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bioethanol Simulator</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; line-height: 1.6; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; }
+        button:hover { background-color: #218838; }
+        #results { margin-top: 20px; padding: 15px; border-radius: 4px; display: none; background-color: #f8f9fa; border: 1px solid #ddd; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
 
-    // التأكد إن مفيش خانة فاضية
-    if (Object.values(data).some(x => x === "")) {
-        alert("من فضلك املأ كل الخانات أولاً");
-        return;
-    }
+    <h2>Bioethanol Production Simulator</h2>
 
-    // إرسال البيانات للسيرفر
-    const response = await fetch('/simulate', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    });
+    <div class="input-group">
+        <label>Feed rate (ton/day):</label>
+        <input type="number" id="feed_rate" placeholder="e.g. 100">
+    </div>
+    <div class="input-group">
+        <label>Pretreatment efficiency (0-1):</label>
+        <input type="number" id="pretreat_eff" step="0.01" placeholder="e.g. 0.9">
+    </div>
+    <div class="input-group">
+        <label>Hydrolysis efficiency (0-1):</label>
+        <input type="number" id="hydroly_eff" step="0.01" placeholder="e.g. 0.8">
+    </div>
+    <div class="input-group">
+        <label>Fermentation efficiency (0-1):</label>
+        <input type="number" id="ferment_eff" step="0.01" placeholder="e.g. 0.9">
+    </div>
+    <div class="input-group">
+        <label>Ethanol price ($/L):</label>
+        <input type="number" id="eth_price" step="0.01" placeholder="e.g. 0.8">
+    </div>
+    <div class="input-group">
+        <label>Feedstock cost ($/ton):</label>
+        <input type="number" id="feed_cost" placeholder="e.g. 50">
+    </div>
+    <div class="input-group">
+        <label>Enzyme cost ($/kg sugar):</label>
+        <input type="number" id="enzyme_cost" step="0.01" placeholder="e.g. 0.1">
+    </div>
+    <div class="input-group">
+        <label>Annual operating cost ($):</label>
+        <input type="number" id="annual_operating_cost" placeholder="e.g. 1000000">
+    </div>
 
-    const result = await response.json();
-    
-    // عرض النتيجة في الصفحة بدل ما تفتح صفحة جديدة
-    document.getElementById('results').innerHTML = `
-        <h3>Results:</h3>
-        <p>Daily Profit: $${result.daily_profit.toFixed(2)}</p>
-        <p>Ethanol Produced: ${result.ethanol_L.toFixed(2)} Liters</p>
-    `;
-}
-</script>
+    <button type="button" onclick="runSimulation()">Run Simulation</button>
 
-<button type="button" onclick="runSimulation()">Run Simulation</button>
-<div id="results"></div>
+    <div id="results"></div>
+
+    <script>
+        async function runSimulation() {
+            const resultsDiv = document.getElementById('results');
+            
+            // تجميع البيانات
+            const data = {
+                feed_rate: document.getElementById('feed_rate').value,
+                pretreat_eff: document.getElementById('pretreat_eff').value,
+                hydroly_eff: document.getElementById('hydroly_eff').value,
+                ferment_eff: document.getElementById('ferment_eff').value,
+                eth_price: document.getElementById('eth_price').value,
+                feed_cost: document.getElementById('feed_cost').value,
+                enzyme_cost: document.getElementById('enzyme_cost').value,
+                annual_operating_cost: document.getElementById('annual_operating_cost').value
+            };
+
+            // التحقق من أن كل الخانات ممتلئة
+            if (Object.values(data).some(v => v === "")) {
+                alert("Please fill all fields!");
+                return;
+            }
+
+            try {
+                const response = await fetch('/simulate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Server Error');
+
+                const result = await response.json();
+
+                // عرض النتائج في نفس الصفحة
+                resultsDiv.style.display = 'block';
+                resultsDiv.innerHTML = `
+                    <h3 style="margin-top:0">Simulation Results:</h3>
+                    <p><strong>Daily Profit:</strong> <span style="color: ${result.daily_profit >= 0 ? 'green' : 'red'}">$${result.daily_profit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></p>
+                    <p><strong>Ethanol Produced:</strong> ${result.ethanol_L.toLocaleString()} Liters/day</p>
+                    <p><strong>Total Daily Cost:</strong> $${result.total_daily_cost.toLocaleString()}</p>
+                `;
+            } catch (error) {
+                resultsDiv.style.display = 'block';
+                resultsDiv.innerHTML = `<p class="error">Error: Could not connect to the server.</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
