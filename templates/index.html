@@ -1,116 +1,522 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bioethanol Simulation - محاكاة البيوتانول الحيوي</title>
+    <title>Bioethanol Production Simulation</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 35px;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.5);
+        }
+
+        h1 {
+            color: #0f2027;
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 4px solid #2c5364;
+        }
+
+        h2 {
+            color: #1a4b5e;
+            margin: 25px 0 20px;
+            font-size: 1.8em;
+        }
+
+        h3 {
+            color: #286f8a;
+            margin: 20px 0 15px;
+            font-size: 1.4em;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+
+        .input-card {
+            background: #f8faff;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #e1f0fa;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1e3c72;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #d9e9f5;
+            border-radius: 12px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #2c5364;
+            box-shadow: 0 0 10px rgba(44, 83, 100, 0.2);
+        }
+
+        button {
+            background: linear-gradient(135deg, #0f2027, #2c5364);
+            color: white;
+            padding: 18px 35px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.4s;
+            margin: 20px 0 30px;
+            box-shadow: 0 10px 25px rgba(44, 83, 100, 0.4);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(44, 83, 100, 0.6);
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            border-left: 5px solid #c62828;
+        }
+
+        .results-container {
+            background: #f0f9ff;
+            border-radius: 25px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 2px solid #2c5364;
+        }
+
+        .results-header {
+            background: linear-gradient(90deg, #0f2027, #2c5364);
+            padding: 20px;
+            border-radius: 15px;
+            color: white;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .profit-main {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .result-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+        }
+
+        .result-title {
+            color: #1e3c72;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+
+        .result-value {
+            color: #2c5364;
+            font-size: 1.6em;
+            font-weight: bold;
+        }
+
+        .result-unit {
+            color: #666;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            margin: 30px 0;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        canvas {
+            max-height: 350px;
+            width: 100% !important;
+        }
+
+        .constants-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 0.95em;
+            color: #0d47a1;
+        }
+
+        @media (max-width: 768px) {
+            .grid-3, .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>🌱 محاكاة إنتاج البيوتانول الحيوي Bioethanol</h1>
+        <h1>🌱 Bioethanol Production Simulation</h1>
         
-        <div class="grid-3">
-            <div class="input-card">
-                <h3>🧪 معايير العملية</h3>
-                <div class="input-group">
-                    <label>كمية المواد الخام (طن/يوم):</label>
-                    <input type="number" id="feedRate" step="0.1" min="1" max="1000" value="100">
+        <div class="constants-info">
+            <strong>📊 Fixed Parameters (based on corn stover):</strong><br>
+            Cellulose: 45% | Hemicellulose: 30% | Lignin: 15% | Moisture: 15%<br>
+            Glucose→Ethanol: 51.1% | Xylose→Ethanol: 48.1% | Ethanol Density: 0.789 kg/L
+        </div>
+        
+        <form method="POST">
+            <div class="grid-3">
+                <div class="input-card">
+                    <h3>⚙️ Process Parameters</h3>
+                    <div class="input-group">
+                        <label>Feedstock Rate (ton/day):</label>
+                        <input type="number" name="feed_rate" step="0.1" min="1" max="1000" 
+                               value="{{ request.form.feed_rate or 100 }}" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Pretreatment Efficiency (0.5-1.0):</label>
+                        <input type="number" name="pretreat_eff" step="0.01" min="0.5" max="1.0" 
+                               value="{{ request.form.pretreat_eff or 0.85 }}" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Hydrolysis Efficiency (0.5-1.0):</label>
+                        <input type="number" name="hydroly_eff" step="0.01" min="0.5" max="1.0" 
+                               value="{{ request.form.hydroly_eff or 0.90 }}" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Fermentation Efficiency (0.5-1.0):</label>
+                        <input type="number" name="ferment_eff" step="0.01" min="0.5" max="1.0" 
+                               value="{{ request.form.ferment_eff or 0.95 }}" required>
+                    </div>
                 </div>
-                <div class="input-group">
-                    <label>كفاءة المعالجة الأولية (0.5-1.0):</label>
-                    <input type="number" id="pretreatEff" step="0.01" min="0.5" max="1.0" value="0.85">
+                
+                <div class="input-card">
+                    <h3>💰 Economic Parameters</h3>
+                    <div class="input-group">
+                        <label>Ethanol Price ($/L):</label>
+                        <input type="number" name="eth_price" step="0.01" min="0" 
+                               value="{{ request.form.eth_price or 0.75 }}" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Feedstock Cost ($/ton):</label>
+                        <input type="number" name="feed_cost" step="0.1" min="0" 
+                               value="{{ request.form.feed_cost or 50 }}" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Enzyme Cost ($/kg sugar):</label>
+                        <input type="number" name="enzyme_cost" step="0.01" min="0" 
+                               value="{{ request.form.enzyme_cost or 0.15 }}" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Annual Operating Cost ($/year):</label>
+                        <input type="number" name="annual_operating_cost" step="1000" min="0" 
+                               value="{{ request.form.annual_operating_cost or 500000 }}" required>
+                    </div>
                 </div>
-                <div class="input-group">
-                    <label>كفاءة التحلل المائي (0.5-1.0):</label>
-                    <input type="number" id="hydrolyEff" step="0.01" min="0.5" max="1.0" value="0.90">
-                </div>
-                <div class="input-group">
-                    <label>كفاءة التخمير (0.5-1.0):</label>
-                    <input type="number" id="fermentEff" step="0.01" min="0.5" max="1.0" value="0.95">
+                
+                <div class="input-card">
+                    <h3>📊 Analysis Info</h3>
+                    <p style="color: #1e3c72; line-height: 1.6;">
+                        This simulation calculates bioethanol production from lignocellulosic biomass.<br><br>
+                        <strong>Output includes:</strong><br>
+                        • Biomass components<br>
+                        • Sugar production<br>
+                        • Ethanol yield<br>
+                        • Economic analysis<br>
+                        • Sensitivity analysis
+                    </p>
                 </div>
             </div>
             
-            <div class="input-card">
-                <h3>💰 المعايير الاقتصادية</h3>
-                <div class="input-group">
-                    <label>سعر الإيثانول ($/لتر):</label>
-                    <input type="number" id="ethPrice" step="0.01" min="0" value="0.75">
-                </div>
-                <div class="input-group">
-                    <label>تكلفة المواد الخام ($/طن):</label>
-                    <input type="number" id="feedCost" step="0.1" min="0" value="50">
-                </div>
-                <div class="input-group">
-                    <label>تكلفة الإنزيمات ($/كجم سكر):</label>
-                    <input type="number" id="enzymeCost" step="0.01" min="0" value="0.15">
-                </div>
-                <div class="input-group">
-                    <label>التكلفة التشغيلية السنوية ($/سنة):</label>
-                    <input type="number" id="annualCost" step="1000" min="0" value="500000">
-                </div>
-            </div>
-            
-            <div class="input-card">
-                <h3>📊 خيارات التحليل</h3>
-                <div class="input-group">
-                    <label>نطاق تحليل الحساسية (من - إلى):</label>
-                    <input type="number" id="sensMin" step="0.01" min="0.3" max="1.0" value="0.5">
-                    <input type="number" id="sensMax" step="0.01" min="0.5" max="1.0" value="1.0" style="margin-top: 10px;">
-                </div>
-                <div class="input-group">
-                    <label>نطاق تغيير المواد الخام (%):</label>
-                    <input type="number" id="feedRange" step="5" min="10" max="100" value="30">
-                </div>
-            </div>
-        </div>
+            <button type="submit">🚀 Run Advanced Simulation</button>
+        </form>
         
-        <div class="constant-info" id="constantsDisplay">
-            <strong>📌 القيم الثابتة (من تحليل العينة):</strong>
-            <span>السليلوز: 45% | الهيميسليلوز: 30% | اللجنين: 15% | الرطوبة: 15%</span>
-        </div>
+        {% if error %}
+        <div class="error">❌ Error: {{ error }}</div>
+        {% endif %}
         
-        <button onclick="runSimulation()">🚀 تشغيل المحاكاة المتقدمة</button>
-        
-        <div class="loading" id="loading">
-            <div class="loading-spinner"></div>
-            جاري حساب النتائج وتحليل الحساسية...
-        </div>
-        
-        <div class="error" id="error"></div>
-        
-        <div class="results-container" id="results" style="display: none;">
+        {% if results %}
+        <div class="results-container">
             <div class="results-header">
-                <h2 style="color: white; margin: 0; border: none;">📈 نتائج المحاكاة التفصيلية</h2>
-                <span class="profit-main" id="profitDisplay">$0</span>
+                <h2 style="color: white; margin: 0;">📈 Detailed Simulation Results</h2>
+                <span class="profit-main">${{ "%.2f"|format(results.dailyProfit) }}</span>
             </div>
             
-            <div class="results-grid" id="resultsContent"></div>
+            <div class="results-grid">
+                <!-- Biomass Section -->
+                <div class="result-card">
+                    <div class="result-title">📦 Dry Biomass</div>
+                    <div class="result-value">{{ "%.2f"|format(results.dryBiomass) }} <span class="result-unit">ton/day</span></div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">🌾 Cellulose</div>
+                    <div class="result-value">{{ "%.2f"|format(results.cellulose) }} <span class="result-unit">kg/day</span></div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">🌿 Hemicellulose</div>
+                    <div class="result-value">{{ "%.2f"|format(results.hemicellulose) }} <span class="result-unit">kg/day</span></div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">🪵 Lignin</div>
+                    <div class="result-value">{{ "%.2f"|format(results.lignin) }} <span class="result-unit">kg/day</span></div>
+                </div>
+                
+                <!-- Sugars Section -->
+                <div class="result-card">
+                    <div class="result-title">🍬 Glucose Produced</div>
+                    <div class="result-value">{{ "%.2f"|format(results.glucose) }} <span class="result-unit">kg/day</span></div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">🍬 Xylose Produced</div>
+                    <div class="result-value">{{ "%.2f"|format(results.xylose) }} <span class="result-unit">kg/day</span></div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">📊 Total Sugars</div>
+                    <div class="result-value">{{ "%.2f"|format(results.totalSugars) }} <span class="result-unit">kg/day</span></div>
+                </div>
+                
+                <!-- Ethanol Section -->
+                <div class="result-card">
+                    <div class="result-title">🧪 Ethanol (mass)</div>
+                    <div class="result-value">{{ "%.2f"|format(results.ethanolKg) }} <span class="result-unit">kg/day</span></div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">🧪 Ethanol (volume)</div>
+                    <div class="result-value">{{ "%.2f"|format(results.ethanolL) }} <span class="result-unit">L/day</span></div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">📈 Yield per ton</div>
+                    <div class="result-value">{{ "%.2f"|format(results.yieldPerTon) }} <span class="result-unit">L/ton</span></div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">⚡ Energy Output</div>
+                    <div class="result-value">{{ "%.2f"|format(results.energyOutput) }} <span class="result-unit">MJ/day</span></div>
+                </div>
+                
+                <!-- Economics Section -->
+                <div class="result-card">
+                    <div class="result-title">💰 Daily Revenue</div>
+                    <div class="result-value">${{ "%.2f"|format(results.dailyRevenue) }}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">💸 Feedstock Cost</div>
+                    <div class="result-value">${{ "%.2f"|format(results.dailyFeedCost) }}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">🧪 Enzyme Cost</div>
+                    <div class="result-value">${{ "%.2f"|format(results.dailyEnzymeCost) }}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">⚡ Utility Cost</div>
+                    <div class="result-value">${{ "%.2f"|format(results.dailyUtilityCost) }}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">👷 Labor Cost</div>
+                    <div class="result-value">${{ "%.2f"|format(results.dailyLaborCost) }}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">🏭 Operating Cost</div>
+                    <div class="result-value">${{ "%.2f"|format(results.dailyOperating) }}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">📊 Total Daily Cost</div>
+                    <div class="result-value">${{ "%.2f"|format(results.totalDailyCost) }}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">💵 Daily Profit</div>
+                    <div class="result-value" style="color: {% if results.dailyProfit >= 0 %}#2e7d32{% else %}#c62828{% endif %};">
+                        ${{ "%.2f"|format(results.dailyProfit) }}
+                    </div>
+                </div>
+                
+                <!-- Performance Indicators -->
+                <div class="result-card">
+                    <div class="result-title">📊 Profit Margin</div>
+                    <div class="result-value">{{ "%.2f"|format(results.profitMargin) }}%</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">⚖️ Break-even Point</div>
+                    <div class="result-value">{{ "%.2f"|format(results.breakEvenPoint) }} <span class="result-unit">L/day</span></div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">📈 ROI</div>
+                    <div class="result-value">{{ "%.2f"|format(results.roi) }}%</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">🔄 Sugar Conversion</div>
+                    <div class="result-value">{{ "%.2f"|format(results.sugarConversionEff) }}%</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">🎯 Overall Efficiency</div>
+                    <div class="result-value">{{ "%.2f"|format(results.overallEff) }}%</div>
+                </div>
+            </div>
         </div>
         
-        <div class="chart-container" id="chartEfficiency" style="display: none;">
-            <h3>📊 تحليل الحساسية - تأثير الكفاءات على الربح</h3>
+        {% if sensitivity and feed_analysis %}
+        <!-- Charts Section -->
+        <div class="chart-container">
+            <h3>📊 Sensitivity Analysis - Efficiency Impact on Profit</h3>
             <canvas id="efficiencyChart"></canvas>
         </div>
         
-        <div class="chart-container" id="chartFeed" style="display: none;">
-            <h3>📈 تأثير كمية المواد الخام على الإنتاج والربح</h3>
+        <div class="chart-container">
+            <h3>📈 Feedstock Rate Impact on Production and Profit</h3>
             <canvas id="feedRateChart"></canvas>
         </div>
         
-        <div class="grid-2" id="additionalCharts" style="display: none;">
+        <div class="grid-2">
             <div class="chart-container">
-                <h3>🔄 العلاقة بين السكريات والإيثانول</h3>
+                <h3>🔄 Sugar to Ethanol Conversion</h3>
                 <canvas id="sugarEthanolChart"></canvas>
             </div>
             <div class="chart-container">
-                <h3>💰 تحليل التكاليف والإيرادات</h3>
-                <canvas id="costRevenueChart"></canvas>
+                <h3>💰 Cost Distribution</h3>
+                <canvas id="costChart"></canvas>
             </div>
         </div>
+        
+        <script>
+            // Efficiency Chart
+            new Chart(document.getElementById('efficiencyChart'), {
+                type: 'line',
+                data: {
+                    labels: {{ sensitivity.range|safe }},
+                    datasets: [
+                        { label: 'Pretreatment Efficiency', data: {{ sensitivity.pretreatProfits|safe }}, borderColor: '#ff6384', tension: 0.4 },
+                        { label: 'Hydrolysis Efficiency', data: {{ sensitivity.hydrolyProfits|safe }}, borderColor: '#36a2eb', tension: 0.4 },
+                        { label: 'Fermentation Efficiency', data: {{ sensitivity.fermentProfits|safe }}, borderColor: '#4bc0c0', tension: 0.4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: { y: { title: { display: true, text: 'Daily Profit ($)' } } }
+                }
+            });
+            
+            // Feed Rate Chart
+            new Chart(document.getElementById('feedRateChart'), {
+                type: 'line',
+                data: {
+                    labels: {{ feed_analysis.feedValues|safe }},
+                    datasets: [
+                        { label: 'Ethanol (L/day)', data: {{ feed_analysis.ethanolValues|safe }}, borderColor: '#4bc0c0', yAxisID: 'y', tension: 0.4 },
+                        { label: 'Profit ($/day)', data: {{ feed_analysis.profitValues|safe }}, borderColor: '#ff6384', yAxisID: 'y1', tension: 0.4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Ethanol (L)' } },
+                        y1: { type: 'linear', position: 'right', title: { display: true, text: 'Profit ($)' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+            
+            // Sugar to Ethanol Chart
+            new Chart(document.getElementById('sugarEthanolChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Glucose', 'Xylose', 'Total Sugars', 'Ethanol'],
+                    datasets: [{
+                        label: 'Amount (kg)',
+                        data: [{{ results.glucose }}, {{ results.xylose }}, {{ results.totalSugars }}, {{ results.ethanolKg }}],
+                        backgroundColor: ['#36a2eb', '#4bc0c0', '#ffce56', '#ff6384']
+                    }]
+                },
+                options: { responsive: true }
+            });
+            
+            // Cost Distribution Chart
+            new Chart(document.getElementById('costChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Feedstock', 'Enzymes', 'Utilities', 'Labor', 'Operating'],
+                    datasets: [{
+                        data: [
+                            {{ results.dailyFeedCost }},
+                            {{ results.dailyEnzymeCost }},
+                            {{ results.dailyUtilityCost }},
+                            {{ results.dailyLaborCost }},
+                            {{ results.dailyOperating }}
+                        ],
+                        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff']
+                    }]
+                },
+                options: { responsive: true }
+            });
+        </script>
+        {% endif %}
+        {% endif %}
     </div>
-    
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
+  
