@@ -3,7 +3,7 @@ import numpy as np
 
 app = Flask(__name__)
 
-# Constant values based on real scientific studies
+# Constant values based on real scientific studies - EXACT VALUES
 CONSTANTS = {
     # Biomass composition (corn stover model)
     "celluloseFraction": 0.45,        # 45% cellulose
@@ -14,299 +14,152 @@ CONSTANTS = {
     # Default moisture content
     "moisture": 0.15,                   # 15% moisture
     
-    # Conversion factors (based on scientific literature)
+    # Conversion factors (EXACT scientific values)
     "celluloseToGlucose": 1.111,        # (162/180) polymerization factor
     "hemicelluloseToXylose": 1.136,      # (132/150) hemicellulose conversion
     
-    # Biochemical conversion efficiencies
-    "glucoseToEthanol": 0.511,           # 51.1% conversion efficiency (theoretical 0.511)
-    "xyloseToEthanol": 0.481,            # 48.1% xylose conversion efficiency
+    # Biochemical conversion efficiencies (EXACT)
+    "glucoseToEthanol": 0.511,           # 51.1% theoretical yield
+    "xyloseToEthanol": 0.481,            # 48.1% xylose conversion
     
     # Physical properties
-    "ethanolDensity": 0.789,              # Ethanol density kg/L at 20°C
-    "sugarToEthanol": 0.51,               # Sugar to ethanol conversion factor
+    "ethanolDensity": 0.789,              # kg/L at 20°C
     
     # Energy values
-    "ethanolEnergy": 29.7,                 # MJ/kg specific energy of ethanol
+    "ethanolEnergy": 29.7,                 # MJ/kg
 }
 
-def calculate_carbohydrates(dry_biomass):
-    """Calculate biomass components"""
-    cellulose = dry_biomass * CONSTANTS["celluloseFraction"]
-    hemicellulose = dry_biomass * CONSTANTS["hemicelluloseFraction"]
-    lignin = dry_biomass * CONSTANTS["ligninFraction"]
-    others = dry_biomass * CONSTANTS["otherFraction"]
+def simulate_scenario(params):
+    """Main simulation function - EXACT CALCULATIONS"""
     
-    return {
-        "cellulose": cellulose,
-        "hemicellulose": hemicellulose,
-        "lignin": lignin,
-        "others": others
-    }
+    # Read inputs
+    feed_rate = params["feed_rate"]              # ton/day
+    pretreat_eff = params["pretreat_eff"]        # 0-1
+    hydroly_eff = params["hydroly_eff"]          # 0-1
+    ferment_eff = params["ferment_eff"]          # 0-1
+    eth_price = params["eth_price"]              # $/L
+    feed_cost = params["feed_cost"]              # $/ton
+    enzyme_cost = params["enzyme_cost"]          # $/kg sugar
+    annual_op_cost = params["annual_operating_cost"]  # $/year
 
-def calculate_sugars(cellulose, hemicellulose, pretreat_eff, hydroly_eff):
-    """Calculate produced sugars"""
-    # Convert cellulose to glucose
+    # 1. Dry biomass calculation (ton/day)
+    dry_biomass = feed_rate * (1 - CONSTANTS["moisture"])
+    
+    # 2. Component calculations (convert to kg/day)
+    cellulose = dry_biomass * 1000 * CONSTANTS["celluloseFraction"]
+    hemicellulose = dry_biomass * 1000 * CONSTANTS["hemicelluloseFraction"]
+    lignin = dry_biomass * 1000 * CONSTANTS["ligninFraction"]
+    
+    # 3. Sugar production (kg/day)
     glucose = cellulose * CONSTANTS["celluloseToGlucose"] * pretreat_eff * hydroly_eff
-    
-    # Convert hemicellulose to xylose and other sugars
     xylose = hemicellulose * CONSTANTS["hemicelluloseToXylose"] * pretreat_eff * hydroly_eff
-    
-    # Other sugars (10% of hemicellulose)
     other_sugars = hemicellulose * 0.10 * pretreat_eff * hydroly_eff
+    total_sugars = glucose + xylose + other_sugars
     
-    return {
-        "glucose": glucose,
-        "xylose": xylose,
-        "otherSugars": other_sugars,
-        "total": glucose + xylose + other_sugars
-    }
-
-def calculate_ethanol(sugars, ferment_eff):
-    """Calculate ethanol production"""
-    # Glucose conversion
-    ethanol_from_glucose = sugars["glucose"] * CONSTANTS["glucoseToEthanol"] * ferment_eff
-    
-    # Xylose conversion (lower efficiency)
-    ethanol_from_xylose = sugars["xylose"] * CONSTANTS["xyloseToEthanol"] * ferment_eff * 0.85
-    
-    # Other sugars conversion
-    ethanol_from_others = sugars["otherSugars"] * CONSTANTS["sugarToEthanol"] * ferment_eff * 0.90
+    # 4. Ethanol production (kg/day)
+    ethanol_from_glucose = glucose * CONSTANTS["glucoseToEthanol"] * ferment_eff
+    ethanol_from_xylose = xylose * CONSTANTS["xyloseToEthanol"] * ferment_eff * 0.85
+    ethanol_from_others = other_sugars * 0.51 * ferment_eff * 0.90
     
     ethanol_kg = ethanol_from_glucose + ethanol_from_xylose + ethanol_from_others
-    ethanol_l = ethanol_kg / CONSTANTS["ethanolDensity"]
+    ethanol_liters = ethanol_kg / CONSTANTS["ethanolDensity"]
     
-    return {
-        "kg": ethanol_kg,
-        "liters": ethanol_l,
-        "fromGlucose": ethanol_from_glucose,
-        "fromXylose": ethanol_from_xylose,
-        "fromOthers": ethanol_from_others
-    }
-
-def calculate_economics(ethanol, feed_rate, sugars, params):
-    """Calculate economic indicators"""
+    # 5. Economic calculations
     # Revenue
-    daily_revenue = ethanol["liters"] * params["eth_price"]
+    daily_revenue = ethanol_liters * eth_price
     
     # Costs
-    daily_feed_cost = feed_rate * params["feed_cost"]
-    daily_enzyme_cost = sugars["total"] * params["enzyme_cost"]
-    daily_operating = params["annual_operating_cost"] / 365
-    daily_labor_cost = params["annual_operating_cost"] * 0.3 / 365  # 30% labor
-    daily_utility_cost = params["annual_operating_cost"] * 0.2 / 365  # 20% utilities
+    daily_feed_cost = feed_rate * feed_cost
+    daily_enzyme_cost = total_sugars * enzyme_cost
+    daily_operating = annual_op_cost / 365
+    daily_labor = annual_op_cost * 0.30 / 365
+    daily_utilities = annual_op_cost * 0.20 / 365
     
-    total_daily_cost = daily_feed_cost + daily_enzyme_cost + daily_operating + \
-                      daily_labor_cost + daily_utility_cost
+    total_daily_cost = (daily_feed_cost + daily_enzyme_cost + 
+                       daily_operating + daily_labor + daily_utilities)
     
     daily_profit = daily_revenue - total_daily_cost
     
-    # Economic indicators
+    # Performance indicators
+    yield_per_ton = ethanol_liters / feed_rate
+    sugar_conversion = (ethanol_kg / total_sugars * 100) if total_sugars > 0 else 0
     profit_margin = (daily_profit / daily_revenue * 100) if daily_revenue > 0 else 0
-    break_even_point = total_daily_cost / params["eth_price"] if params["eth_price"] > 0 else 0
-    roi = (daily_profit * 365) / (params["annual_operating_cost"] * 2) * 100 if params["annual_operating_cost"] > 0 else 0
-    
-    return {
-        "revenue": daily_revenue,
-        "feedCost": daily_feed_cost,
-        "enzymeCost": daily_enzyme_cost,
-        "operatingCost": daily_operating,
-        "laborCost": daily_labor_cost,
-        "utilityCost": daily_utility_cost,
-        "totalCost": total_daily_cost,
-        "profit": daily_profit,
-        "profitMargin": profit_margin,
-        "breakEvenPoint": break_even_point,
-        "roi": roi
-    }
-
-def simulate_scenario(params):
-    """Main simulation function"""
-    # Extract parameters
-    feed_rate = params["feed_rate"]
-    pretreat_eff = params["pretreat_eff"]
-    hydroly_eff = params["hydroly_eff"]
-    ferment_eff = params["ferment_eff"]
-    eth_price = params["eth_price"]
-    feed_cost = params["feed_cost"]
-    enzyme_cost = params["enzyme_cost"]
-    annual_operating_cost = params["annual_operating_cost"]
-    
-    # 1. Calculate dry biomass
-    dry_biomass = feed_rate * (1 - CONSTANTS["moisture"])
-    
-    # 2. Calculate biomass components
-    components = calculate_carbohydrates(dry_biomass)
-    
-    # 3. Calculate produced sugars
-    sugars = calculate_sugars(components["cellulose"], components["hemicellulose"], 
-                              pretreat_eff, hydroly_eff)
-    
-    # 4. Calculate ethanol production
-    ethanol = calculate_ethanol(sugars, ferment_eff)
-    
-    # 5. Economic calculations
-    economics = calculate_economics(ethanol, feed_rate, sugars, {
-        "eth_price": eth_price,
-        "feed_cost": feed_cost,
-        "enzyme_cost": enzyme_cost,
-        "annual_operating_cost": annual_operating_cost
-    })
-    
-    # 6. Additional calculations
-    yield_per_ton = ethanol["liters"] / feed_rate if feed_rate > 0 else 0
-    sugar_conversion_eff = (ethanol["kg"] / sugars["total"] * 100) if sugars["total"] > 0 else 0
-    overall_eff = (ethanol["kg"] / (dry_biomass * 1000 * 0.75) * 100) if dry_biomass > 0 else 0
+    break_even = total_daily_cost / eth_price if eth_price > 0 else 0
+    roi = (daily_profit * 365) / (annual_op_cost * 2) * 100 if annual_op_cost > 0 else 0
     
     return {
         # Inputs
-        "feedRate": feed_rate,
-        "dryBiomass": dry_biomass,
+        "feed_rate": feed_rate,
         
         # Components
-        "cellulose": components["cellulose"] * 1000,
-        "hemicellulose": components["hemicellulose"] * 1000,
-        "lignin": components["lignin"] * 1000,
+        "dry_biomass": dry_biomass,
+        "cellulose": round(cellulose, 2),
+        "hemicellulose": round(hemicellulose, 2),
+        "lignin": round(lignin, 2),
         
         # Sugars
-        "glucose": sugars["glucose"],
-        "xylose": sugars["xylose"],
-        "totalSugars": sugars["total"],
+        "glucose": round(glucose, 2),
+        "xylose": round(xylose, 2),
+        "total_sugars": round(total_sugars, 2),
         
         # Ethanol
-        "ethanolKg": ethanol["kg"],
-        "ethanolL": ethanol["liters"],
-        "ethanolFromGlucose": ethanol["fromGlucose"],
-        "ethanolFromXylose": ethanol["fromXylose"],
+        "ethanol_kg": round(ethanol_kg, 2),
+        "ethanol_liters": round(ethanol_liters, 2),
+        "yield_per_ton": round(yield_per_ton, 2),
         
         # Economics
-        "dailyRevenue": economics["revenue"],
-        "dailyFeedCost": economics["feedCost"],
-        "dailyEnzymeCost": economics["enzymeCost"],
-        "dailyOperating": economics["operatingCost"],
-        "dailyLaborCost": economics["laborCost"],
-        "dailyUtilityCost": economics["utilityCost"],
-        "totalDailyCost": economics["totalCost"],
-        "dailyProfit": economics["profit"],
-        "profitMargin": economics["profitMargin"],
-        "breakEvenPoint": economics["breakEvenPoint"],
-        "roi": economics["roi"],
+        "daily_revenue": round(daily_revenue, 2),
+        "daily_feed_cost": round(daily_feed_cost, 2),
+        "daily_enzyme_cost": round(daily_enzyme_cost, 2),
+        "daily_operating": round(daily_operating, 2),
+        "daily_labor": round(daily_labor, 2),
+        "daily_utilities": round(daily_utilities, 2),
+        "total_daily_cost": round(total_daily_cost, 2),
+        "daily_profit": round(daily_profit, 2),
         
-        # Performance indicators
-        "yieldPerTon": yield_per_ton,
-        "sugarConversionEff": sugar_conversion_eff,
-        "overallEff": overall_eff,
+        # Performance
+        "profit_margin": round(profit_margin, 2),
+        "break_even": round(break_even, 2),
+        "roi": round(roi, 2),
+        "sugar_conversion": round(sugar_conversion, 2),
         
-        # Ethanol energy
-        "energyOutput": ethanol["kg"] * CONSTANTS["ethanolEnergy"]
+        # Energy
+        "energy_output": round(ethanol_kg * CONSTANTS["ethanolEnergy"], 2)
     }
 
 def sensitivity_analysis(params):
-    """Advanced sensitivity analysis"""
-    feed_rate = params["feed_rate"]
-    pretreat_eff = params["pretreat_eff"]
-    hydroly_eff = params["hydroly_eff"]
-    ferment_eff = params["ferment_eff"]
-    eth_price = params["eth_price"]
-    feed_cost = params["feed_cost"]
-    enzyme_cost = params["enzyme_cost"]
-    annual_cost = params["annual_operating_cost"]
+    """Sensitivity analysis for efficiencies"""
+    results = []
+    efficiencies = [0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
     
-    steps = 20
-    range_vals = np.linspace(0.5, 1.0, steps + 1)
-    
-    pretreat_profits = []
-    hydroly_profits = []
-    ferment_profits = []
-    ethanol_production = []
-    
-    for val in range_vals:
-        # Pretreatment efficiency effect
-        sim1 = simulate_scenario({
-            "feed_rate": feed_rate, "pretreat_eff": val, "hydroly_eff": hydroly_eff,
-            "ferment_eff": ferment_eff, "eth_price": eth_price, "feed_cost": feed_cost,
-            "enzyme_cost": enzyme_cost, "annual_operating_cost": annual_cost
-        })
-        pretreat_profits.append(sim1["dailyProfit"])
-        
-        # Hydrolysis efficiency effect
-        sim2 = simulate_scenario({
-            "feed_rate": feed_rate, "pretreat_eff": pretreat_eff, "hydroly_eff": val,
-            "ferment_eff": ferment_eff, "eth_price": eth_price, "feed_cost": feed_cost,
-            "enzyme_cost": enzyme_cost, "annual_operating_cost": annual_cost
-        })
-        hydroly_profits.append(sim2["dailyProfit"])
-        
-        # Fermentation efficiency effect
-        sim3 = simulate_scenario({
-            "feed_rate": feed_rate, "pretreat_eff": pretreat_eff, "hydroly_eff": hydroly_eff,
-            "ferment_eff": val, "eth_price": eth_price, "feed_cost": feed_cost,
-            "enzyme_cost": enzyme_cost, "annual_operating_cost": annual_cost
-        })
-        ferment_profits.append(sim3["dailyProfit"])
-        
-        # Ethanol production at different efficiencies
-        ethanol_production.append(sim3["ethanolL"])
-    
-    return {
-        "range": (range_vals * 100).tolist(),
-        "pretreatProfits": pretreat_profits,
-        "hydrolyProfits": hydroly_profits,
-        "fermentProfits": ferment_profits,
-        "ethanolProduction": ethanol_production
-    }
-
-def feed_rate_analysis(params):
-    """Feed rate impact analysis"""
-    feed_rate = params["feed_rate"]
-    pretreat_eff = params["pretreat_eff"]
-    hydroly_eff = params["hydroly_eff"]
-    ferment_eff = params["ferment_eff"]
-    eth_price = params["eth_price"]
-    feed_cost = params["feed_cost"]
-    enzyme_cost = params["enzyme_cost"]
-    annual_cost = params["annual_operating_cost"]
-    
-    min_feed = feed_rate * 0.5
-    max_feed = feed_rate * 1.5
-    steps = 15
-    feed_values = np.linspace(min_feed, max_feed, steps + 1)
-    
-    ethanol_values = []
-    profit_values = []
-    revenue_values = []
-    cost_values = []
-    
-    for f in feed_values:
+    for eff in efficiencies:
         sim = simulate_scenario({
-            "feed_rate": f, "pretreat_eff": pretreat_eff, "hydroly_eff": hydroly_eff,
-            "ferment_eff": ferment_eff, "eth_price": eth_price, "feed_cost": feed_cost,
-            "enzyme_cost": enzyme_cost, "annual_operating_cost": annual_cost
+            "feed_rate": params["feed_rate"],
+            "pretreat_eff": eff,
+            "hydroly_eff": eff,
+            "ferment_eff": eff,
+            "eth_price": params["eth_price"],
+            "feed_cost": params["feed_cost"],
+            "enzyme_cost": params["enzyme_cost"],
+            "annual_operating_cost": params["annual_operating_cost"]
         })
-        ethanol_values.append(sim["ethanolL"])
-        profit_values.append(sim["dailyProfit"])
-        revenue_values.append(sim["dailyRevenue"])
-        cost_values.append(sim["totalDailyCost"])
+        results.append({
+            "efficiency": eff * 100,
+            "profit": sim["daily_profit"],
+            "ethanol": sim["ethanol_liters"]
+        })
     
-    return {
-        "feedValues": feed_values.tolist(),
-        "ethanolValues": ethanol_values,
-        "profitValues": profit_values,
-        "revenueValues": revenue_values,
-        "costValues": cost_values
-    }
+    return results
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    """Main page - displays form and results"""
+    """Main page"""
     results = None
     sensitivity = None
-    feed_analysis = None
     error = None
     
     if request.method == 'POST':
         try:
-            # Read inputs from form
             params = {
                 "feed_rate": float(request.form['feed_rate']),
                 "pretreat_eff": float(request.form['pretreat_eff']),
@@ -318,16 +171,12 @@ def index():
                 "annual_operating_cost": float(request.form['annual_operating_cost'])
             }
             
-            # Validate inputs
+            # Validate
             if params["feed_rate"] <= 0:
-                raise ValueError("Feed rate must be greater than 0")
-            if not all(0.5 <= v <= 1.0 for v in [params["pretreat_eff"], params["hydroly_eff"], params["ferment_eff"]]):
-                raise ValueError("Efficiencies must be between 0.5 and 1.0")
+                raise ValueError("Feed rate must be > 0")
             
-            # Run simulations
             results = simulate_scenario(params)
             sensitivity = sensitivity_analysis(params)
-            feed_analysis = feed_rate_analysis(params)
             
         except Exception as e:
             error = str(e)
@@ -335,14 +184,8 @@ def index():
     return render_template('index.html', 
                          results=results, 
                          sensitivity=sensitivity,
-                         feed_analysis=feed_analysis,
                          error=error,
                          constants=CONSTANTS)
 
-@app.route('/health')
-def health():
-    """Health check endpoint"""
-    return {'status': 'healthy'}
-
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.5.0', port=5000)
