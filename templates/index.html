@@ -8,215 +8,187 @@
     <style>
         * {
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
         }
-
+        
         body {
-            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-            min-height: 100vh;
-            padding: 30px 20px;
+            background: #1a2a3a;
+            padding: 20px;
         }
-
+        
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
-            border-radius: 30px;
-            padding: 35px;
-            box-shadow: 0 25px 70px rgba(0,0,0,0.5);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
-
+        
         h1 {
-            color: #0f2027;
+            color: #1e3c72;
             text-align: center;
-            font-size: 2.5em;
             margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 4px solid #2c5364;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #2c5364;
         }
-
-        h2 {
-            color: #1a4b5e;
-            margin: 25px 0 20px;
-            font-size: 1.8em;
-        }
-
-        h3 {
-            color: #286f8a;
-            margin: 20px 0 15px;
-            font-size: 1.4em;
-        }
-
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
+        
         .grid-2 {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 25px;
-        }
-
-        .input-card {
-            background: #f8faff;
-            padding: 25px;
-            border-radius: 20px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-            border: 1px solid #e1f0fa;
-        }
-
-        .input-group {
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
             margin-bottom: 20px;
         }
-
+        
+        .input-card {
+            background: #f5f9ff;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #d0e0f0;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
         .input-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             color: #1e3c72;
             font-weight: 600;
-            font-size: 1em;
         }
-
+        
         .input-group input {
             width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #d9e9f5;
-            border-radius: 12px;
+            padding: 10px;
+            border: 2px solid #d0e0f0;
+            border-radius: 8px;
             font-size: 1em;
-            transition: all 0.3s;
         }
-
+        
         .input-group input:focus {
             outline: none;
             border-color: #2c5364;
-            box-shadow: 0 0 10px rgba(44, 83, 100, 0.2);
         }
-
+        
         button {
-            background: linear-gradient(135deg, #0f2027, #2c5364);
+            background: #2c5364;
             color: white;
-            padding: 18px 35px;
+            padding: 15px 30px;
             border: none;
-            border-radius: 50px;
-            font-size: 1.3em;
+            border-radius: 10px;
+            font-size: 1.2em;
             font-weight: bold;
             cursor: pointer;
             width: 100%;
-            transition: all 0.4s;
-            margin: 20px 0 30px;
-            box-shadow: 0 10px 25px rgba(44, 83, 100, 0.4);
+            margin: 20px 0;
         }
-
+        
         button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 35px rgba(44, 83, 100, 0.6);
+            background: #1e3c72;
         }
-
+        
         .error {
             background: #ffebee;
             color: #c62828;
             padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
+            border-radius: 8px;
+            margin: 15px 0;
             text-align: center;
-            border-left: 5px solid #c62828;
         }
-
-        .results-container {
-            background: #f0f9ff;
-            border-radius: 25px;
-            padding: 30px;
-            margin: 30px 0;
+        
+        .results {
+            background: #e8f0fe;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
             border: 2px solid #2c5364;
         }
-
-        .results-header {
-            background: linear-gradient(90deg, #0f2027, #2c5364);
-            padding: 20px;
-            border-radius: 15px;
+        
+        .profit-box {
+            background: #2c5364;
             color: white;
-            margin-bottom: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
         }
-
-        .profit-main {
-            font-size: 2.2em;
+        
+        .profit-box .label {
+            font-size: 1.1em;
+        }
+        
+        .profit-box .value {
+            font-size: 2.5em;
             font-weight: bold;
             color: #ffd700;
         }
-
+        
         .results-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
         }
-
-        .result-card {
+        
+        .result-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .result-item .title {
+            color: #1e3c72;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .result-item .value {
+            color: #2c5364;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .result-item .unit {
+            color: #666;
+            font-size: 0.8em;
+        }
+        
+        .negative {
+            color: #c62828 !important;
+        }
+        
+        .positive {
+            color: #2e7d32 !important;
+        }
+        
+        .chart-container {
             background: white;
             padding: 20px;
             border-radius: 15px;
-            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+            margin-top: 20px;
+            border: 1px solid #d0e0f0;
         }
-
-        .result-title {
-            color: #1e3c72;
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 1em;
-        }
-
-        .result-value {
-            color: #2c5364;
-            font-size: 1.6em;
-            font-weight: bold;
-        }
-
-        .result-unit {
-            color: #666;
-            font-size: 0.8em;
-            margin-left: 5px;
-        }
-
-        .chart-container {
-            background: white;
-            padding: 25px;
-            border-radius: 20px;
-            margin: 30px 0;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-        }
-
+        
         canvas {
-            max-height: 350px;
+            max-height: 300px;
             width: 100% !important;
         }
-
-        .constants-info {
+        
+        .constants {
             background: #e3f2fd;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            font-size: 0.95em;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 0.9em;
             color: #0d47a1;
         }
-
+        
         @media (max-width: 768px) {
-            .grid-3, .grid-2 {
+            .grid-2, .results-grid {
                 grid-template-columns: 1fr;
-            }
-            
-            .container {
-                padding: 20px;
-            }
-            
-            h1 {
-                font-size: 1.8em;
             }
         }
     </style>
@@ -225,19 +197,17 @@
     <div class="container">
         <h1>🌱 Bioethanol Production Simulation</h1>
         
-        <div class="constants-info">
-            <strong>📊 Fixed Parameters (based on corn stover):</strong><br>
-            Cellulose: 45% | Hemicellulose: 30% | Lignin: 15% | Moisture: 15%<br>
-            Glucose→Ethanol: 51.1% | Xylose→Ethanol: 48.1% | Ethanol Density: 0.789 kg/L
+        <div class="constants">
+            <strong>Fixed Parameters:</strong> Cellulose: 45% | Hemicellulose: 30% | Lignin: 15% | Moisture: 15%
         </div>
         
         <form method="POST">
-            <div class="grid-3">
+            <div class="grid-2">
                 <div class="input-card">
-                    <h3>⚙️ Process Parameters</h3>
+                    <h3>Process Parameters</h3>
                     <div class="input-group">
                         <label>Feedstock Rate (ton/day):</label>
-                        <input type="number" name="feed_rate" step="0.1" min="1" max="1000" 
+                        <input type="number" name="feed_rate" step="0.1" min="1" 
                                value="{{ request.form.feed_rate or 100 }}" required>
                     </div>
                     <div class="input-group">
@@ -258,7 +228,7 @@
                 </div>
                 
                 <div class="input-card">
-                    <h3>💰 Economic Parameters</h3>
+                    <h3>Economic Parameters</h3>
                     <div class="input-group">
                         <label>Ethanol Price ($/L):</label>
                         <input type="number" name="eth_price" step="0.01" min="0" 
@@ -280,238 +250,154 @@
                                value="{{ request.form.annual_operating_cost or 500000 }}" required>
                     </div>
                 </div>
-                
-                <div class="input-card">
-                    <h3>📊 Analysis Info</h3>
-                    <p style="color: #1e3c72; line-height: 1.6;">
-                        This simulation calculates bioethanol production from lignocellulosic biomass.<br><br>
-                        <strong>Output includes:</strong><br>
-                        • Biomass components<br>
-                        • Sugar production<br>
-                        • Ethanol yield<br>
-                        • Economic analysis<br>
-                        • Sensitivity analysis
-                    </p>
-                </div>
             </div>
             
-            <button type="submit">🚀 Run Advanced Simulation</button>
+            <button type="submit">RUN SIMULATION</button>
         </form>
         
         {% if error %}
-        <div class="error">❌ Error: {{ error }}</div>
+        <div class="error">Error: {{ error }}</div>
         {% endif %}
         
         {% if results %}
-        <div class="results-container">
-            <div class="results-header">
-                <h2 style="color: white; margin: 0;">📈 Detailed Simulation Results</h2>
-                <span class="profit-main">${{ "%.2f"|format(results.dailyProfit) }}</span>
+        <div class="results">
+            <div class="profit-box">
+                <div class="label">DAILY PROFIT</div>
+                <div class="value {% if results.daily_profit >= 0 %}positive{% else %}negative{% endif %}">
+                    ${{ "{:,.2f}".format(results.daily_profit) }}
+                </div>
             </div>
             
             <div class="results-grid">
-                <!-- Biomass Section -->
-                <div class="result-card">
-                    <div class="result-title">📦 Dry Biomass</div>
-                    <div class="result-value">{{ "%.2f"|format(results.dryBiomass) }} <span class="result-unit">ton/day</span></div>
+                <!-- Biomass -->
+                <div class="result-item">
+                    <div class="title">Dry Biomass</div>
+                    <div class="value">{{ "{:,.2f}".format(results.dry_biomass) }}</div>
+                    <div class="unit">ton/day</div>
                 </div>
-                <div class="result-card">
-                    <div class="result-title">🌾 Cellulose</div>
-                    <div class="result-value">{{ "%.2f"|format(results.cellulose) }} <span class="result-unit">kg/day</span></div>
+                <div class="result-item">
+                    <div class="title">Cellulose</div>
+                    <div class="value">{{ "{:,.2f}".format(results.cellulose) }}</div>
+                    <div class="unit">kg/day</div>
                 </div>
-                <div class="result-card">
-                    <div class="result-title">🌿 Hemicellulose</div>
-                    <div class="result-value">{{ "%.2f"|format(results.hemicellulose) }} <span class="result-unit">kg/day</span></div>
-                </div>
-                <div class="result-card">
-                    <div class="result-title">🪵 Lignin</div>
-                    <div class="result-value">{{ "%.2f"|format(results.lignin) }} <span class="result-unit">kg/day</span></div>
-                </div>
-                
-                <!-- Sugars Section -->
-                <div class="result-card">
-                    <div class="result-title">🍬 Glucose Produced</div>
-                    <div class="result-value">{{ "%.2f"|format(results.glucose) }} <span class="result-unit">kg/day</span></div>
-                </div>
-                <div class="result-card">
-                    <div class="result-title">🍬 Xylose Produced</div>
-                    <div class="result-value">{{ "%.2f"|format(results.xylose) }} <span class="result-unit">kg/day</span></div>
-                </div>
-                <div class="result-card">
-                    <div class="result-title">📊 Total Sugars</div>
-                    <div class="result-value">{{ "%.2f"|format(results.totalSugars) }} <span class="result-unit">kg/day</span></div>
+                <div class="result-item">
+                    <div class="title">Hemicellulose</div>
+                    <div class="value">{{ "{:,.2f}".format(results.hemicellulose) }}</div>
+                    <div class="unit">kg/day</div>
                 </div>
                 
-                <!-- Ethanol Section -->
-                <div class="result-card">
-                    <div class="result-title">🧪 Ethanol (mass)</div>
-                    <div class="result-value">{{ "%.2f"|format(results.ethanolKg) }} <span class="result-unit">kg/day</span></div>
+                <!-- Sugars -->
+                <div class="result-item">
+                    <div class="title">Glucose</div>
+                    <div class="value">{{ "{:,.2f}".format(results.glucose) }}</div>
+                    <div class="unit">kg/day</div>
                 </div>
-                <div class="result-card">
-                    <div class="result-title">🧪 Ethanol (volume)</div>
-                    <div class="result-value">{{ "%.2f"|format(results.ethanolL) }} <span class="result-unit">L/day</span></div>
+                <div class="result-item">
+                    <div class="title">Xylose</div>
+                    <div class="value">{{ "{:,.2f}".format(results.xylose) }}</div>
+                    <div class="unit">kg/day</div>
                 </div>
-                <div class="result-card">
-                    <div class="result-title">📈 Yield per ton</div>
-                    <div class="result-value">{{ "%.2f"|format(results.yieldPerTon) }} <span class="result-unit">L/ton</span></div>
-                </div>
-                <div class="result-card">
-                    <div class="result-title">⚡ Energy Output</div>
-                    <div class="result-value">{{ "%.2f"|format(results.energyOutput) }} <span class="result-unit">MJ/day</span></div>
-                </div>
-                
-                <!-- Economics Section -->
-                <div class="result-card">
-                    <div class="result-title">💰 Daily Revenue</div>
-                    <div class="result-value">${{ "%.2f"|format(results.dailyRevenue) }}</div>
-                </div>
-                <div class="result-card">
-                    <div class="result-title">💸 Feedstock Cost</div>
-                    <div class="result-value">${{ "%.2f"|format(results.dailyFeedCost) }}</div>
-                </div>
-                <div class="result-card">
-                    <div class="result-title">🧪 Enzyme Cost</div>
-                    <div class="result-value">${{ "%.2f"|format(results.dailyEnzymeCost) }}</div>
-                </div>
-                <div class="result-card">
-                    <div class="result-title">⚡ Utility Cost</div>
-                    <div class="result-value">${{ "%.2f"|format(results.dailyUtilityCost) }}</div>
-                </div>
-                <div class="result-card">
-                    <div class="result-title">👷 Labor Cost</div>
-                    <div class="result-value">${{ "%.2f"|format(results.dailyLaborCost) }}</div>
-                </div>
-                <div class="result-card">
-                    <div class="result-title">🏭 Operating Cost</div>
-                    <div class="result-value">${{ "%.2f"|format(results.dailyOperating) }}</div>
-                </div>
-                <div class="result-card">
-                    <div class="result-title">📊 Total Daily Cost</div>
-                    <div class="result-value">${{ "%.2f"|format(results.totalDailyCost) }}</div>
-                </div>
-                <div class="result-card">
-                    <div class="result-title">💵 Daily Profit</div>
-                    <div class="result-value" style="color: {% if results.dailyProfit >= 0 %}#2e7d32{% else %}#c62828{% endif %};">
-                        ${{ "%.2f"|format(results.dailyProfit) }}
-                    </div>
+                <div class="result-item">
+                    <div class="title">Total Sugars</div>
+                    <div class="value">{{ "{:,.2f}".format(results.total_sugars) }}</div>
+                    <div class="unit">kg/day</div>
                 </div>
                 
-                <!-- Performance Indicators -->
-                <div class="result-card">
-                    <div class="result-title">📊 Profit Margin</div>
-                    <div class="result-value">{{ "%.2f"|format(results.profitMargin) }}%</div>
+                <!-- Ethanol -->
+                <div class="result-item">
+                    <div class="title">Ethanol (mass)</div>
+                    <div class="value">{{ "{:,.2f}".format(results.ethanol_kg) }}</div>
+                    <div class="unit">kg/day</div>
                 </div>
-                <div class="result-card">
-                    <div class="result-title">⚖️ Break-even Point</div>
-                    <div class="result-value">{{ "%.2f"|format(results.breakEvenPoint) }} <span class="result-unit">L/day</span></div>
+                <div class="result-item">
+                    <div class="title">Ethanol (volume)</div>
+                    <div class="value">{{ "{:,.2f}".format(results.ethanol_liters) }}</div>
+                    <div class="unit">L/day</div>
                 </div>
-                <div class="result-card">
-                    <div class="result-title">📈 ROI</div>
-                    <div class="result-value">{{ "%.2f"|format(results.roi) }}%</div>
+                <div class="result-item">
+                    <div class="title">Yield per ton</div>
+                    <div class="value">{{ "{:,.2f}".format(results.yield_per_ton) }}</div>
+                    <div class="unit">L/ton</div>
                 </div>
-                <div class="result-card">
-                    <div class="result-title">🔄 Sugar Conversion</div>
-                    <div class="result-value">{{ "%.2f"|format(results.sugarConversionEff) }}%</div>
+                
+                <!-- Costs -->
+                <div class="result-item">
+                    <div class="title">Feedstock Cost</div>
+                    <div class="value">${{ "{:,.2f}".format(results.daily_feed_cost) }}</div>
+                    <div class="unit">per day</div>
                 </div>
-                <div class="result-card">
-                    <div class="result-title">🎯 Overall Efficiency</div>
-                    <div class="result-value">{{ "%.2f"|format(results.overallEff) }}%</div>
+                <div class="result-item">
+                    <div class="title">Enzyme Cost</div>
+                    <div class="value">${{ "{:,.2f}".format(results.daily_enzyme_cost) }}</div>
+                    <div class="unit">per day</div>
+                </div>
+                <div class="result-item">
+                    <div class="title">Total Cost</div>
+                    <div class="value">${{ "{:,.2f}".format(results.total_daily_cost) }}</div>
+                    <div class="unit">per day</div>
+                </div>
+                
+                <!-- Performance -->
+                <div class="result-item">
+                    <div class="title">Revenue</div>
+                    <div class="value">${{ "{:,.2f}".format(results.daily_revenue) }}</div>
+                    <div class="unit">per day</div>
+                </div>
+                <div class="result-item">
+                    <div class="title">Profit Margin</div>
+                    <div class="value">{{ "{:,.2f}".format(results.profit_margin) }}%</div>
+                    <div class="unit"></div>
+                </div>
+                <div class="result-item">
+                    <div class="title">ROI</div>
+                    <div class="value">{{ "{:,.2f}".format(results.roi) }}%</div>
+                    <div class="unit"></div>
                 </div>
             </div>
         </div>
         
-        {% if sensitivity and feed_analysis %}
-        <!-- Charts Section -->
+        {% if sensitivity %}
         <div class="chart-container">
-            <h3>📊 Sensitivity Analysis - Efficiency Impact on Profit</h3>
-            <canvas id="efficiencyChart"></canvas>
-        </div>
-        
-        <div class="chart-container">
-            <h3>📈 Feedstock Rate Impact on Production and Profit</h3>
-            <canvas id="feedRateChart"></canvas>
-        </div>
-        
-        <div class="grid-2">
-            <div class="chart-container">
-                <h3>🔄 Sugar to Ethanol Conversion</h3>
-                <canvas id="sugarEthanolChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3>💰 Cost Distribution</h3>
-                <canvas id="costChart"></canvas>
-            </div>
+            <h3>Sensitivity Analysis</h3>
+            <canvas id="sensitivityChart"></canvas>
         </div>
         
         <script>
-            // Efficiency Chart
-            new Chart(document.getElementById('efficiencyChart'), {
+            const ctx = document.getElementById('sensitivityChart').getContext('2d');
+            new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: {{ sensitivity.range|safe }},
-                    datasets: [
-                        { label: 'Pretreatment Efficiency', data: {{ sensitivity.pretreatProfits|safe }}, borderColor: '#ff6384', tension: 0.4 },
-                        { label: 'Hydrolysis Efficiency', data: {{ sensitivity.hydrolyProfits|safe }}, borderColor: '#36a2eb', tension: 0.4 },
-                        { label: 'Fermentation Efficiency', data: {{ sensitivity.fermentProfits|safe }}, borderColor: '#4bc0c0', tension: 0.4 }
-                    ]
+                    labels: [{% for item in sensitivity %}{{ item.efficiency }},{% endfor %}],
+                    datasets: [{
+                        label: 'Daily Profit ($)',
+                        data: [{% for item in sensitivity %}{{ item.profit }},{% endfor %}],
+                        borderColor: '#2c5364',
+                        backgroundColor: 'rgba(44, 83, 100, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
                 },
                 options: {
                     responsive: true,
-                    plugins: { legend: { position: 'bottom' } },
-                    scales: { y: { title: { display: true, text: 'Daily Profit ($)' } } }
-                }
-            });
-            
-            // Feed Rate Chart
-            new Chart(document.getElementById('feedRateChart'), {
-                type: 'line',
-                data: {
-                    labels: {{ feed_analysis.feedValues|safe }},
-                    datasets: [
-                        { label: 'Ethanol (L/day)', data: {{ feed_analysis.ethanolValues|safe }}, borderColor: '#4bc0c0', yAxisID: 'y', tension: 0.4 },
-                        { label: 'Profit ($/day)', data: {{ feed_analysis.profitValues|safe }}, borderColor: '#ff6384', yAxisID: 'y1', tension: 0.4 }
-                    ]
-                },
-                options: {
-                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
                     scales: {
-                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Ethanol (L)' } },
-                        y1: { type: 'linear', position: 'right', title: { display: true, text: 'Profit ($)' }, grid: { drawOnChartArea: false } }
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Profit ($/day)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Efficiency (%)'
+                            }
+                        }
                     }
                 }
-            });
-            
-            // Sugar to Ethanol Chart
-            new Chart(document.getElementById('sugarEthanolChart'), {
-                type: 'bar',
-                data: {
-                    labels: ['Glucose', 'Xylose', 'Total Sugars', 'Ethanol'],
-                    datasets: [{
-                        label: 'Amount (kg)',
-                        data: [{{ results.glucose }}, {{ results.xylose }}, {{ results.totalSugars }}, {{ results.ethanolKg }}],
-                        backgroundColor: ['#36a2eb', '#4bc0c0', '#ffce56', '#ff6384']
-                    }]
-                },
-                options: { responsive: true }
-            });
-            
-            // Cost Distribution Chart
-            new Chart(document.getElementById('costChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Feedstock', 'Enzymes', 'Utilities', 'Labor', 'Operating'],
-                    datasets: [{
-                        data: [
-                            {{ results.dailyFeedCost }},
-                            {{ results.dailyEnzymeCost }},
-                            {{ results.dailyUtilityCost }},
-                            {{ results.dailyLaborCost }},
-                            {{ results.dailyOperating }}
-                        ],
-                        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff']
-                    }]
-                },
-                options: { responsive: true }
             });
         </script>
         {% endif %}
@@ -519,4 +405,3 @@
     </div>
 </body>
 </html>
-  
