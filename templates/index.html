@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bioethanol Simulation - NREL Standards</title>
+    <title>Bioethanol Simulation (NREL Standards) – Dry Feed</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; }
         body { background: #1a2a3a; padding: 20px; }
-        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         h1 { color: #1e3c72; text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2c5364; padding-bottom: 15px; }
         h2 { color: #1e3c72; margin: 30px 0 20px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
@@ -39,22 +39,22 @@
 </head>
 <body>
     <div class="container">
-        <h1>🌱 Bioethanol Simulation (NREL Standards)</h1>
+        <h1>🌱 Bioethanol Simulation (NREL Standards) – Dry Feed</h1>
         <form method="POST">
             <div class="grid-2">
                 <div class="input-card">
-                    <h3>⚙️ Process Parameters</h3>
-                    <div class="input-group"><label>Feedstock Rate (ton/day):</label><input type="number" name="feed_rate" step="0.1" min="1" value="{{ request.form.feed_rate or 100 }}" required></div>
-                    <div class="input-group"><label>Pretreatment Efficiency (0.5-1.0):</label><input type="number" name="pretreat_eff" step="0.01" min="0.5" max="1.0" value="{{ request.form.pretreat_eff or 0.85 }}" required></div>
+                    <h3>⚙️ Process Parameters (Dry Basis)</h3>
+                    <div class="input-group"><label>Feedstock Rate (dry tonne/day):</label><input type="number" name="feed_rate" step="0.1" min="1" value="{{ request.form.feed_rate or 2215.1 }}" required></div>
+                    <div class="input-group"><label>Pretreatment Efficiency (0.5-1.0):</label><input type="number" name="pretreat_eff" step="0.01" min="0.5" max="1.0" value="{{ request.form.pretreat_eff or 0.90 }}" required></div>
                     <div class="input-group"><label>Hydrolysis Efficiency (0.5-1.0):</label><input type="number" name="hydroly_eff" step="0.01" min="0.5" max="1.0" value="{{ request.form.hydroly_eff or 0.90 }}" required></div>
-                    <div class="input-group"><label>Fermentation Efficiency (0.5-1.0):</label><input type="number" name="ferment_eff" step="0.01" min="0.5" max="1.0" value="{{ request.form.ferment_eff or 0.95 }}" required></div>
+                    <div class="input-group"><label>Fermentation Efficiency (0.5-1.0):</label><input type="number" name="ferment_eff" step="0.01" min="0.5" max="1.0" value="{{ request.form.ferment_eff or 0.92 }}" required></div>
                 </div>
                 <div class="input-card">
                     <h3>💰 Economic Parameters</h3>
-                    <div class="input-group"><label>Ethanol Price ($/L):</label><input type="number" name="eth_price" step="0.01" min="0" value="{{ request.form.eth_price or 0.75 }}" required></div>
-                    <div class="input-group"><label>Feedstock Cost ($/ton):</label><input type="number" name="feed_cost" step="0.1" min="0" value="{{ request.form.feed_cost or 50 }}" required></div>
-                    <div class="input-group"><label>Enzyme Cost ($/kg sugar):</label><input type="number" name="enzyme_cost" step="0.01" min="0" value="{{ request.form.enzyme_cost or 0.15 }}" required></div>
-                    <div class="input-group"><label>Annual Operating Cost ($/year):</label><input type="number" name="annual_operating_cost" step="1000" min="0" value="{{ request.form.annual_operating_cost or 500000 }}" required></div>
+                    <div class="input-group"><label>Ethanol Price ($/L):</label><input type="number" name="eth_price" step="0.01" min="0" value="{{ request.form.eth_price or 0.57 }}" required></div>
+                    <div class="input-group"><label>Feedstock Cost ($/dry tonne):</label><input type="number" name="feed_cost" step="0.1" min="0" value="{{ request.form.feed_cost or 58.5 }}" required></div>
+                    <div class="input-group"><label>Enzyme Cost ($/kg sugar):</label><input type="number" name="enzyme_cost" step="0.01" min="0" value="{{ request.form.enzyme_cost or 0.12 }}" required></div>
+                    <div class="input-group"><label>Annual Operating Cost ($/year):</label><input type="number" name="annual_operating_cost" step="1000" min="0" value="{{ request.form.annual_operating_cost or 13000000 }}" required></div>
                 </div>
             </div>
             <button type="submit">🚀 RUN SIMULATION</button>
@@ -69,7 +69,7 @@
                 <div class="value {% if results.daily_profit >= 0 %}positive{% else %}negative{% endif %}">${{ "{:,.2f}".format(results.daily_profit) }}</div>
             </div>
             <div class="results-grid">
-                <div class="result-item"><div class="title">Dry Biomass</div><div class="value">{{ "{:,.2f}".format(results.dry_biomass) }}</div><div class="unit">ton/day</div></div>
+                <div class="result-item"><div class="title">Feed Rate (dry)</div><div class="value">{{ "{:,.2f}".format(results.feed_rate) }}</div><div class="unit">ton/day</div></div>
                 <div class="result-item"><div class="title">Cellulose</div><div class="value">{{ "{:,.2f}".format(results.cellulose) }}</div><div class="unit">kg/day</div></div>
                 <div class="result-item"><div class="title">Hemicellulose</div><div class="value">{{ "{:,.2f}".format(results.hemicellulose) }}</div><div class="unit">kg/day</div></div>
                 <div class="result-item"><div class="title">Glucose</div><div class="value">{{ "{:,.2f}".format(results.glucose) }}</div><div class="unit">kg/day</div></div>
@@ -102,16 +102,6 @@
         <div class="chart-container">
             <h3>📈 Fermentation Efficiency vs Daily Profit</h3>
             <canvas id="fermentChart"></canvas>
-        </div>
-        <!-- 4. Feed Rate -->
-        <div class="chart-container">
-            <h3>📈 Feed Flow Rate vs Daily Profit</h3>
-            <canvas id="feedChart"></canvas>
-        </div>
-        <!-- 5. Combined Efficiencies -->
-        <div class="chart-container">
-            <h3>📊 Combined Analysis: All Efficiencies vs Profit</h3>
-            <canvas id="combinedChart"></canvas>
         </div>
 
         <script>
@@ -177,45 +167,6 @@
                     responsive: true,
                     plugins: { title: { display: true, text: 'Fermentation Efficiency Impact' }, legend: { display: false } },
                     scales: { y: { title: { display: true, text: 'Profit ($/day)' } }, x: { title: { display: true, text: 'Fermentation Efficiency (%)' } } }
-                }
-            });
-            // Feed Rate Chart
-            new Chart(document.getElementById('feedChart'), {
-                type: 'line',
-                data: {
-                    labels: {{ sensitivity.feed_rates|safe }},
-                    datasets: [{
-                        label: 'Daily Profit ($)',
-                        data: {{ sensitivity.feed_profits|safe }},
-                        borderColor: '#9b59b6',
-                        backgroundColor: 'rgba(155,89,182,0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { title: { display: true, text: 'Feed Flow Rate Impact' }, legend: { display: false } },
-                    scales: { y: { title: { display: true, text: 'Profit ($/day)' } }, x: { title: { display: true, text: 'Feed Rate (ton/day)' } } }
-                }
-            });
-            // Combined Chart
-            new Chart(document.getElementById('combinedChart'), {
-                type: 'line',
-                data: {
-                    labels: eff,
-                    datasets: [
-                        { label: 'Pretreatment', data: {{ sensitivity.pretreat_profits|safe }}, borderColor: '#e74c3c', backgroundColor: 'transparent', tension: 0.4 },
-                        { label: 'Hydrolysis', data: {{ sensitivity.hydroly_profits|safe }}, borderColor: '#3498db', backgroundColor: 'transparent', tension: 0.4 },
-                        { label: 'Fermentation', data: {{ sensitivity.ferment_profits|safe }}, borderColor: '#2ecc71', backgroundColor: 'transparent', tension: 0.4 },
-                        { label: 'All Equal', data: {{ sensitivity.combined_profits|safe }}, borderColor: '#f39c12', backgroundColor: 'transparent', borderDash: [5,5], tension: 0.4 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { title: { display: true, text: 'All Efficiencies Comparison' }, legend: { position: 'bottom' } },
-                    scales: { y: { title: { display: true, text: 'Profit ($/day)' } }, x: { title: { display: true, text: 'Efficiency (%)' } } }
                 }
             });
         </script>
