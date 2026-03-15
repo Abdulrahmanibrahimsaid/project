@@ -5,43 +5,40 @@ app = Flask(__name__)
 
 # NREL standard constants
 CONSTANTS = {
-    "celluloseFraction": 0.45,          # 45% cellulose
-    "hemicelluloseFraction": 0.30,       # 30% hemicellulose
-    "ligninFraction": 0.15,              # 15% lignin
-    "moisture": 0.15,                    # 15% moisture
-    "celluloseToGlucose": 1.111,         # (162/180)
-    "hemicelluloseToXylose": 1.136,       # (132/150)
-    "glucoseToEthanol": 0.511,            # theoretical yield
-    "xyloseToEthanol": 0.481,             # theoretical yield
+    "celluloseFraction": 0.45,          # 45% of dry biomass
+    "hemicelluloseFraction": 0.30,       # 30% of dry biomass
+    "ligninFraction": 0.15,              # 15% of dry biomass
+    "otherFraction": 0.10,                # 10% other
+    "celluloseToGlucose": 1.111,         # (180/162)
+    "hemicelluloseToXylose": 1.136,       # (150/132)
+    "glucoseToEthanol": 0.511,            # theoretical yield kg/kg
+    "xyloseToEthanol": 0.481,             # theoretical yield kg/kg
     "ethanolDensity": 0.789,              # kg/L at 20°C
 }
 
 def simulate_scenario(params):
-    # Read inputs
-    feed_rate = params["feed_rate"]
+    # Read inputs (feed_rate is in dry tonnes/day)
+    feed_rate = params["feed_rate"]          # dry tonne/day
     pretreat = params["pretreat_eff"]
     hydroly = params["hydroly_eff"]
     ferment = params["ferment_eff"]
     eth_price = params["eth_price"]
-    feed_cost = params["feed_cost"]
-    enzyme_cost = params["enzyme_cost"]
+    feed_cost = params["feed_cost"]          # $/dry tonne
+    enzyme_cost = params["enzyme_cost"]      # $/kg sugar
     annual_op = params["annual_operating_cost"]
 
-    # Dry biomass
-    dry_biomass = feed_rate * (1 - CONSTANTS["moisture"])
+    # Components (kg/day) – directly from dry feed rate
+    cellulose = feed_rate * 1000 * CONSTANTS["celluloseFraction"]
+    hemicellulose = feed_rate * 1000 * CONSTANTS["hemicelluloseFraction"]
+    lignin = feed_rate * 1000 * CONSTANTS["ligninFraction"]
 
-    # Components (kg/day)
-    cellulose = dry_biomass * 1000 * CONSTANTS["celluloseFraction"]
-    hemicellulose = dry_biomass * 1000 * CONSTANTS["hemicelluloseFraction"]
-    lignin = dry_biomass * 1000 * CONSTANTS["ligninFraction"]
-
-    # Sugars
+    # Sugars (kg/day)
     glucose = cellulose * CONSTANTS["celluloseToGlucose"] * pretreat * hydroly
     xylose = hemicellulose * CONSTANTS["hemicelluloseToXylose"] * pretreat * hydroly
-    other_sugars = hemicellulose * 0.10 * pretreat * hydroly   # other sugars (e.g., arabinose)
+    other_sugars = hemicellulose * 0.10 * pretreat * hydroly   # other sugars
     total_sugars = glucose + xylose + other_sugars
 
-    # Ethanol (kg)
+    # Ethanol (kg/day)
     ethanol_from_glucose = glucose * CONSTANTS["glucoseToEthanol"] * ferment
     ethanol_from_xylose = xylose * CONSTANTS["xyloseToEthanol"] * ferment * 0.85   # 85% of theoretical for xylose
     ethanol_from_others = other_sugars * 0.51 * ferment * 0.90                     # 90% of theoretical for others
@@ -65,7 +62,8 @@ def simulate_scenario(params):
     roi = (daily_profit * 365) / (annual_op * 2) * 100 if annual_op > 0 else 0
 
     return {
-        "dry_biomass": round(dry_biomass, 2),
+        # Removed dry_biomass – now feed_rate is already dry
+        "feed_rate": feed_rate,
         "cellulose": round(cellulose, 2),
         "hemicellulose": round(hemicellulose, 2),
         "lignin": round(lignin, 2),
@@ -92,7 +90,6 @@ def sensitivity_analysis(params):
     pretreat_profits = []
     hydroly_profits = []
     ferment_profits = []
-    combined_profits = []
 
     for eff in efficiencies:
         # Pretreatment variation
@@ -107,25 +104,11 @@ def sensitivity_analysis(params):
         sim_f = simulate_scenario({**params, "ferment_eff": eff})
         ferment_profits.append(sim_f["daily_profit"])
 
-        # All equal
-        sim_all = simulate_scenario({**params, "pretreat_eff": eff, "hydroly_eff": eff, "ferment_eff": eff})
-        combined_profits.append(sim_all["daily_profit"])
-
-    # Feed rate variation
-    feed_rates = np.linspace(params["feed_rate"] * 0.5, params["feed_rate"] * 1.5, 15)
-    feed_profits = []
-    for fr in feed_rates:
-        sim_fr = simulate_scenario({**params, "feed_rate": fr})
-        feed_profits.append(sim_fr["daily_profit"])
-
     return {
         "efficiencies": [e * 100 for e in efficiencies],
         "pretreat_profits": pretreat_profits,
         "hydroly_profits": hydroly_profits,
-        "ferment_profits": ferment_profits,
-        "combined_profits": combined_profits,
-        "feed_rates": feed_rates.tolist(),
-        "feed_profits": feed_profits
+        "ferment_profits": ferment_profits
     }
 
 @app.route('/', methods=['GET', 'POST'])
